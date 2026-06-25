@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Azul</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: #0a192f;
+  color: #eee;
+  font-family: 'Segoe UI', sans-serif;
+  padding: 14px;
+  min-height: 100vh;
+}
+h1 {
+  text-align: center;
+  font-size: 2.2rem;
+  color: #e2b96f;
+  letter-spacing: 8px;
+  font-weight: 900;
+  margin-bottom: 2px;
+}
+.subtitle { text-align: center; font-size: 0.72rem; color: #446; letter-spacing: 2px; margin-bottom: 12px; }
+.status-bar { text-align: center; font-size: 0.92rem; font-weight: 600; min-height: 24px; margin-bottom: 4px; }
+.selected-info { text-align: center; font-size: 0.8rem; color: #aaa; min-height: 18px; margin-bottom: 6px; }
+.tiling-results {
+  max-width: 520px; margin: 0 auto 10px; background: #162a45;
+  border-radius: 8px; padding: 10px 14px; font-size: 0.8rem; line-height: 1.8; display: none;
+}
+.tiling-results h3 { color: #e2b96f; margin-bottom: 4px; font-size: 0.85rem; letter-spacing: 1px; }
+.actions { display: flex; justify-content: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; min-height: 36px; align-items: center; }
+.btn {
+  background: transparent; border: 2px solid #e2b96f; color: #e2b96f;
+  border-radius: 8px; padding: 6px 16px; font-size: 0.82rem; font-weight: bold;
+  cursor: pointer; letter-spacing: 1px; transition: background 0.15s, color 0.15s;
+}
+.btn:hover { background: #e2b96f; color: #1a1a2e; }
+.btn.danger { border-color: #e74c3c; color: #e74c3c; }
+.btn.danger:hover { background: #e74c3c; color: white; }
+
+/* Market */
+.market-area { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; align-items: flex-start; margin-bottom: 14px; }
+.factory { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.factory-label { font-size: 0.6rem; color: #446; letter-spacing: 1px; }
+.factory-circle {
+  width: 70px; height: 70px; border-radius: 50%; background: #162a45;
+  border: 2px solid #2a4a7f; display: grid;
+  grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 5px; padding: 11px;
+}
+.factory-tile {
+  border-radius: 3px; cursor: pointer;
+  transition: transform 0.1s, filter 0.1s; border: 1px solid rgba(0,0,0,0.35);
+}
+.factory-tile:hover { transform: scale(1.18); filter: brightness(1.25); }
+.center-area { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.center-pool {
+  min-width: 90px; min-height: 60px; max-width: 150px;
+  background: #0f2035; border: 2px dashed #2a4a7f; border-radius: 8px;
+  padding: 6px; display: flex; flex-wrap: wrap; gap: 4px; align-content: flex-start;
+}
+.center-tile {
+  width: 22px; height: 22px; border-radius: 3px; cursor: pointer;
+  border: 1px solid rgba(0,0,0,0.35); transition: transform 0.1s, filter 0.1s;
+}
+.center-tile:hover { transform: scale(1.18); filter: brightness(1.25); }
+.first-token {
+  width: 22px; height: 22px; border-radius: 3px; background: #e2b96f;
+  border: 1px solid white; font-size: 0.6rem; font-weight: bold; color: #1a1a2e;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* Boards */
+.boards { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.player-board {
+  background: #162a45; border: 2px solid #2a4a7f;
+  border-radius: 10px; padding: 10px 11px;
+}
+.player-board.active-player { border-color: #e2b96f; }
+.player-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.player-name { font-weight: bold; font-size: 0.88rem; color: #e2b96f; }
+.player-score { font-size: 1.5rem; font-weight: 900; color: white; }
+.board-main { display: flex; gap: 5px; align-items: flex-start; margin-bottom: 8px; }
+
+/* Pattern lines */
+.pattern-lines { display: flex; flex-direction: column; gap: 3px; }
+.pattern-row {
+  display: flex; gap: 3px; justify-content: flex-end; align-items: center;
+  height: 26px; padding: 0 3px; border-radius: 4px; position: relative;
+  transition: background 0.15s; cursor: default;
+}
+.pattern-row.valid-target { cursor: pointer; }
+.pattern-row.valid-target::after {
+  content: ''; position: absolute; inset: 0;
+  border: 1px solid #e2b96f88; border-radius: 4px; pointer-events: none;
+}
+.pattern-row.valid-target:hover { background: rgba(226,185,111,0.18); }
+.pattern-row.valid-target:hover::after { border-color: #e2b96f; }
+.pattern-cell {
+  width: 26px; height: 26px; border-radius: 3px;
+  background: #0d2240; border: 1px solid #1a3a6e; flex-shrink: 0;
+}
+.pattern-cell.filled { border-color: rgba(255,255,255,0.22); }
+
+/* Wall */
+.wall-sep { width: 2px; background: #2a4a7f; align-self: stretch; margin: 0 1px; }
+.wall-grid { display: flex; flex-direction: column; gap: 3px; }
+.wall-row { display: flex; gap: 3px; }
+.wall-cell {
+  width: 26px; height: 26px; border-radius: 3px;
+  border: 1px solid rgba(255,255,255,0.07); opacity: 0.18;
+  transition: opacity 0.3s; flex-shrink: 0;
+}
+.wall-cell.filled { opacity: 1; border-color: rgba(255,255,255,0.32); box-shadow: 0 0 4px rgba(255,255,255,0.12); }
+
+/* Floor */
+.floor-section { border-top: 1px solid #2a4a7f; padding-top: 6px; }
+.floor-line { display: flex; gap: 3px; align-items: flex-start; }
+.floor-cell { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.floor-penalty { font-size: 0.54rem; color: #e74c3c; font-weight: bold; }
+.floor-tile { width: 22px; height: 22px; border-radius: 3px; background: #0d2240; border: 1px solid #1a3a6e; }
+.floor-tile.filled { border-color: rgba(255,255,255,0.22); }
+
+/* Help legend */
+.legend { margin-top: 14px; font-size: 0.68rem; color: #446; text-align: center; line-height: 1.9; }
+.legend span { color: #668; }
+</style>
+</head>
+<body>
+<h1>AZUL</h1>
+<p class="subtitle">2-PLAYER HOTSEAT</p>
+
+<div class="status-bar" id="status-bar"></div>
+<div class="selected-info" id="selected-info"></div>
+<div class="tiling-results" id="tiling-results"></div>
+<div class="actions" id="actions"></div>
+<div class="market-area" id="market"></div>
+<div class="boards" id="boards"></div>
+<div class="legend">
+  <span>Pattern lines</span> (left) fill right-to-left · Complete row = 1 tile moves to <span>wall</span> (right) ·
+  Black peg = right color &amp; position<br>
+  Wall scoring: isolated tile = 1pt · connected tiles = length of each chain ·
+  Floor penalties: −1 −1 −2 −2 −2 −3 −3<br>
+  End-game bonuses: complete row +2 · complete column +7 · all 5 of one color +10
+</div>
+
+<script>
+const COLORS = ['blue','yellow','red','green','white'];
+const HEX = { blue:'#1e6bb8', yellow:'#e6a817', red:'#c0392b', green:'#27ae60', white:'#c8b89a' };
+
+const WALL_PATTERN = [
+  ['blue','yellow','red','green','white'],
+  ['white','blue','yellow','red','green'],
+  ['green','white','blue','yellow','red'],
+  ['red','green','white','blue','yellow'],
+  ['yellow','red','green','white','blue'],
+];
+const FLOOR_PENALTIES = [-1,-1,-2,-2,-2,-3,-3];
+const FACTORY_COUNT = 5;
+
+let bag, discard, factories, center, centerHasFirstToken;
+let players, currentPlayer, round, phase, selection, tilingLog;
+
+function initGame() {
+  bag = [];
+  COLORS.forEach(c => { for (let i = 0; i < 20; i++) bag.push(c); });
+  shuffle(bag);
+  discard = [];
+  players = [0,1].map(i => ({
+    name: `Player ${i+1}`,
+    score: 0,
+    patternLines: Array.from({length:5}, () => ({color:null, count:0})),
+    wall: Array.from({length:5}, () => Array(5).fill(false)),
+    floor: [],
+  }));
+  round = 1; currentPlayer = 0; phase = 'draft';
+  selection = null; tilingLog = null;
+  centerHasFirstToken = true; center = [];
+  fillFactories();
+  render();
+}
+
+function shuffle(a) {
+  for (let i = a.length-1; i > 0; i--) {
+    const j = Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]];
+  }
+}
+
+function drawTile() {
+  if (bag.length === 0) {
+    if (discard.length === 0) return null;
+    bag = [...discard]; discard = []; shuffle(bag);
+  }
+  return bag.pop();
+}
+
+function fillFactories() {
+  factories = [];
+  for (let f = 0; f < FACTORY_COUNT; f++) {
+    const tiles = [];
+    for (let t = 0; t < 4; t++) { const tile = drawTile(); if (tile) tiles.push(tile); }
+    factories.push(tiles);
+  }
+}
+
+function allEmpty() {
+  return factories.every(f => f.length === 0) && center.length === 0;
+}
+
+function isValidPatternLine(pIdx, lineIdx) {
+  if (!selection) return false;
+  const {color} = selection;
+  const pl = players[pIdx];
+  const line = pl.patternLines[lineIdx];
+  if (line.count === lineIdx+1) return false;
+  if (line.color && line.color !== color) return false;
+  const wallCol = WALL_PATTERN[lineIdx].indexOf(color);
+  if (pl.wall[lineIdx][wallCol]) return false;
+  return true;
+}
+
+function applySelection(color, tiles) {
+  selection = {color, tiles};
+  phase = 'place';
+  const hasValid = [0,1,2,3,4].some(i => isValidPatternLine(currentPlayer, i));
+  if (!hasValid) { floorAll(); return; }
+  render();
+}
+
+function clickFactory(fIdx, color) {
+  if (phase !== 'draft') return;
+  const factory = factories[fIdx];
+  const taken = factory.filter(t => t === color);
+  if (!taken.length) return;
+  center.push(...factory.filter(t => t !== color));
+  factories[fIdx] = [];
+  applySelection(color, taken);
+}
+
+function clickCenter(color) {
+  if (phase !== 'draft') return;
+  const taken = center.filter(t => t === color);
+  if (!taken.length) return;
+  center = center.filter(t => t !== color);
+  if (centerHasFirstToken) {
+    centerHasFirstToken = false;
+    if (players[currentPlayer].floor.length < 7) players[currentPlayer].floor.push('first');
+  }
+  applySelection(color, taken);
+}
+
+function placeTiles(pIdx, lineIdx) {
+  if (phase !== 'place' || pIdx !== currentPlayer) return;
+  if (!isValidPatternLine(pIdx, lineIdx)) return;
+  const pl = players[pIdx];
+  const line = pl.patternLines[lineIdx];
+  const space = (lineIdx+1) - line.count;
+  const toPlace = Math.min(selection.tiles.length, space);
+  const overflow = selection.tiles.length - toPlace;
+  line.color = selection.color;
+  line.count += toPlace;
+  for (let i = 0; i < overflow; i++) {
+    if (pl.floor.length < 7) pl.floor.push(selection.color); else discard.push(selection.color);
+  }
+  selection = null;
+  afterPlace();
+}
+
+function floorAll() {
+  if (phase !== 'place') return;
+  const pl = players[currentPlayer];
+  for (const t of selection.tiles) {
+    if (pl.floor.length < 7) pl.floor.push(t); else discard.push(t);
+  }
+  selection = null;
+  afterPlace();
+}
+
+function afterPlace() {
+  if (allEmpty()) {
+    doWallTiling();
+  } else {
+    currentPlayer = 1 - currentPlayer;
+    phase = 'draft';
+  }
+  render();
+}
+
+function doWallTiling() {
+  tilingLog = [];
+  let nextFirst = null;
+
+  players.forEach((pl, pIdx) => {
+    const log = {name: pl.name, moved: [], penaltyAmt: 0, gained: 0};
+
+    pl.patternLines.forEach((line, row) => {
+      if (line.count === row+1 && line.color) {
+        const col = WALL_PATTERN[row].indexOf(line.color);
+        pl.wall[row][col] = true;
+        const pts = scoreWallPlacement(pl, row, col);
+        pl.score += pts;
+        log.gained += pts;
+        log.moved.push({color: line.color, pts});
+        for (let i = 0; i < row; i++) discard.push(line.color);
+        line.color = null; line.count = 0;
+      }
+    });
+
+    let penalty = 0;
+    pl.floor.forEach((t, i) => {
+      if (t !== 'first') discard.push(t);
+      penalty += FLOOR_PENALTIES[Math.min(i, FLOOR_PENALTIES.length-1)];
+    });
+    if (pl.floor.includes('first')) nextFirst = pIdx;
+    log.penaltyAmt = penalty;
+    pl.score = Math.max(0, pl.score + penalty);
+    pl.floor = [];
+    log.scoreAfter = pl.score;
+    tilingLog.push(log);
+  });
+
+  if (nextFirst !== null) currentPlayer = nextFirst;
+  tilingLog.nextFirst = nextFirst;
+
+  if (players.some(pl => pl.wall.some(row => row.every(Boolean)))) {
+    players.forEach(pl => { pl.score += computeEndGameBonuses(pl); });
+    // Update log scores after bonuses
+    players.forEach((pl, i) => { tilingLog[i].scoreAfter = pl.score; });
+    phase = 'over';
+  } else {
+    phase = 'tiling';
+  }
+}
+
+function scoreWallPlacement(pl, row, col) {
+  let h=1, v=1, hasH=false, hasV=false;
+  for (let c=col-1;c>=0;c--) { if (pl.wall[row][c]) {h++;hasH=true;} else break; }
+  for (let c=col+1;c< 5;c++) { if (pl.wall[row][c]) {h++;hasH=true;} else break; }
+  for (let r=row-1;r>=0;r--) { if (pl.wall[r][col]) {v++;hasV=true;} else break; }
+  for (let r=row+1;r< 5;r++) { if (pl.wall[r][col]) {v++;hasV=true;} else break; }
+  if (!hasH && !hasV) return 1;
+  return (hasH?h:0)+(hasV?v:0);
+}
+
+function computeEndGameBonuses(pl) {
+  let b=0;
+  for (let r=0;r<5;r++) if (pl.wall[r].every(Boolean)) b+=2;
+  for (let c=0;c<5;c++) if (pl.wall.every(r=>r[c])) b+=7;
+  for (const color of COLORS) {
+    let n=0;
+    for (let r=0;r<5;r++) { const c=WALL_PATTERN[r].indexOf(color); if (pl.wall[r][c]) n++; }
+    if (n===5) b+=10;
+  }
+  return b;
+}
+
+function proceedToNextRound() {
+  round++;
+  centerHasFirstToken = true; center = [];
+  phase = 'draft'; selection = null; tilingLog = null;
+  fillFactories();
+  render();
+}
+
+// ---- Render ----
+
+function render() {
+  renderStatus(); renderSelectedInfo(); renderTilingResults();
+  renderActions(); renderMarket(); renderBoards();
+}
+
+function dot(color, size=12, radius=3) {
+  return `<span style="display:inline-block;width:${size}px;height:${size}px;border-radius:${radius}px;background:${HEX[color]};border:1px solid rgba(255,255,255,0.25);vertical-align:middle;margin:0 2px"></span>`;
+}
+
+function renderStatus() {
+  const el = document.getElementById('status-bar');
+  if (phase==='draft') {
+    el.textContent = `Round ${round}  ·  ${players[currentPlayer].name}'s turn — pick tiles from a factory or center`;
+    el.style.color = '#eee';
+  } else if (phase==='place') {
+    el.textContent = `${players[currentPlayer].name} — click a highlighted row to place tiles`;
+    el.style.color = '#e2b96f';
+  } else if (phase==='tiling') {
+    el.textContent = `Round ${round} complete — review scoring, then start next round`;
+    el.style.color = '#2ecc71';
+  } else if (phase==='over') {
+    const w = players[0].score > players[1].score ? players[0] :
+               players[1].score > players[0].score ? players[1] : null;
+    el.textContent = w ? `Game Over! ${w.name} wins with ${w.score} points!`
+                       : `Game Over! Tie — ${players[0].score} points each!`;
+    el.style.color = '#e2b96f';
+  }
+}
+
+function renderSelectedInfo() {
+  const el = document.getElementById('selected-info');
+  if (!selection) { el.innerHTML=''; return; }
+  el.innerHTML = `${dot(selection.color,14,3)} ${selection.tiles.length}× ${selection.color} selected — click a highlighted pattern row`;
+}
+
+function renderTilingResults() {
+  const el = document.getElementById('tiling-results');
+  if (!tilingLog) { el.style.display='none'; return; }
+  el.style.display='block';
+  let html='<h3>SCORING SUMMARY</h3>';
+  tilingLog.forEach(log => {
+    html += `<div><strong style="color:#e2b96f">${log.name}:</strong> `;
+    if (log.moved.length) {
+      html += log.moved.map(m => `${dot(m.color,10,2)}+${m.pts}`).join(' ');
+    } else { html += 'no tiles placed'; }
+    if (log.penaltyAmt<0) html+=` <span style="color:#e74c3c">${log.penaltyAmt} floor</span>`;
+    html+=` → <strong>${log.scoreAfter} pts</strong></div>`;
+  });
+  if (phase==='over') html+='<div style="margin-top:4px;color:#668;font-size:0.75rem">End-game bonuses applied (+2 row / +7 col / +10 color set)</div>';
+  el.innerHTML=html;
+}
+
+function renderActions() {
+  const el = document.getElementById('actions');
+  el.innerHTML='';
+  if (phase==='place') {
+    const b=document.createElement('button');
+    b.className='btn danger'; b.textContent='FLOOR ALL'; b.onclick=floorAll;
+    el.appendChild(b);
+  }
+  if (phase==='tiling') {
+    const b=document.createElement('button');
+    b.className='btn'; b.textContent='NEXT ROUND →'; b.onclick=proceedToNextRound;
+    el.appendChild(b);
+  }
+  if (phase==='over') {
+    const b=document.createElement('button');
+    b.className='btn'; b.textContent='NEW GAME'; b.onclick=initGame;
+    el.appendChild(b);
+  }
+}
+
+function renderMarket() {
+  const el = document.getElementById('market');
+  el.innerHTML='';
+
+  factories.forEach((tiles, fIdx) => {
+    const wrap = document.createElement('div');
+    wrap.className='factory';
+    const lbl=document.createElement('div'); lbl.className='factory-label'; lbl.textContent=`F${fIdx+1}`;
+    wrap.appendChild(lbl);
+    const circle=document.createElement('div'); circle.className='factory-circle';
+    for (let i=0;i<4;i++) {
+      const cell=document.createElement('div');
+      if (i<tiles.length) {
+        cell.className='factory-tile';
+        cell.style.background=HEX[tiles[i]]; cell.title=tiles[i];
+        if (phase==='draft') cell.onclick=()=>clickFactory(fIdx,tiles[i]);
+      }
+      circle.appendChild(cell);
+    }
+    wrap.appendChild(circle);
+    el.appendChild(wrap);
+  });
+
+  const cWrap=document.createElement('div'); cWrap.className='center-area';
+  const cLbl=document.createElement('div'); cLbl.className='factory-label'; cLbl.textContent='CENTER';
+  cWrap.appendChild(cLbl);
+  const pool=document.createElement('div'); pool.className='center-pool';
+  if (centerHasFirstToken) {
+    const ft=document.createElement('div'); ft.className='first-token';
+    ft.textContent='1'; ft.title='First player token (−1 penalty)';
+    pool.appendChild(ft);
+  }
+  COLORS.forEach(color => {
+    center.filter(t=>t===color).forEach(()=>{
+      const tile=document.createElement('div');
+      tile.className='center-tile'; tile.style.background=HEX[color]; tile.title=color;
+      if (phase==='draft') tile.onclick=()=>clickCenter(color);
+      pool.appendChild(tile);
+    });
+  });
+  if (!centerHasFirstToken && center.length===0) {
+    pool.style.alignItems='center'; pool.style.justifyContent='center';
+    pool.innerHTML='<span style="color:#334;font-size:0.7rem">empty</span>';
+  }
+  cWrap.appendChild(pool);
+  el.appendChild(cWrap);
+}
+
+function renderBoards() {
+  const el=document.getElementById('boards'); el.innerHTML='';
+  players.forEach((pl, pIdx) => {
+    const board=document.createElement('div');
+    const isActive=(phase==='draft'||phase==='place')&&pIdx===currentPlayer;
+    board.className='player-board'+(isActive?' active-player':'');
+
+    const header=document.createElement('div'); header.className='player-header';
+    const nameEl=document.createElement('div'); nameEl.className='player-name'; nameEl.textContent=pl.name;
+    const scoreEl=document.createElement('div'); scoreEl.className='player-score'; scoreEl.textContent=pl.score;
+    header.appendChild(nameEl); header.appendChild(scoreEl); board.appendChild(header);
+
+    const main=document.createElement('div'); main.className='board-main';
+
+    // Pattern lines
+    const patEl=document.createElement('div'); patEl.className='pattern-lines';
+    for (let lineIdx=0;lineIdx<5;lineIdx++) {
+      const line=pl.patternLines[lineIdx];
+      const rowEl=document.createElement('div'); rowEl.className='pattern-row';
+      const isValid=phase==='place'&&pIdx===currentPlayer&&isValidPatternLine(pIdx,lineIdx);
+      if (isValid) {
+        rowEl.classList.add('valid-target');
+        rowEl.onclick=()=>placeTiles(pIdx,lineIdx);
+        rowEl.title=`Row ${lineIdx+1} (${lineIdx+1-line.count} space${lineIdx-line.count?'s':''} left)`;
+      }
+      for (let i=0;i<lineIdx+1;i++) {
+        const cell=document.createElement('div');
+        cell.className='pattern-cell'+(i<line.count?' filled':'');
+        if (i<line.count) cell.style.background=HEX[line.color];
+        rowEl.appendChild(cell);
+      }
+      patEl.appendChild(rowEl);
+    }
+    main.appendChild(patEl);
+
+    const sep=document.createElement('div'); sep.className='wall-sep'; main.appendChild(sep);
+
+    // Wall
+    const wallEl=document.createElement('div'); wallEl.className='wall-grid';
+    for (let r=0;r<5;r++) {
+      const rowEl=document.createElement('div'); rowEl.className='wall-row';
+      for (let c=0;c<5;c++) {
+        const cell=document.createElement('div');
+        cell.className='wall-cell'+(pl.wall[r][c]?' filled':'');
+        cell.style.background=HEX[WALL_PATTERN[r][c]];
+        cell.title=WALL_PATTERN[r][c]+(pl.wall[r][c]?' ✓':'');
+        rowEl.appendChild(cell);
+      }
+      wallEl.appendChild(rowEl);
+    }
+    main.appendChild(wallEl);
+    board.appendChild(main);
+
+    // Floor
+    const floorSec=document.createElement('div'); floorSec.className='floor-section';
+    const floorLine=document.createElement('div'); floorLine.className='floor-line';
+    FLOOR_PENALTIES.forEach((pen,i)=>{
+      const cell=document.createElement('div'); cell.className='floor-cell';
+      const penEl=document.createElement('div'); penEl.className='floor-penalty'; penEl.textContent=pen;
+      const tileEl=document.createElement('div');
+      tileEl.className='floor-tile'+(i<pl.floor.length?' filled':'');
+      if (i<pl.floor.length) {
+        const t=pl.floor[i]; tileEl.style.background=t==='first'?'#e2b96f':HEX[t];
+      }
+      cell.appendChild(penEl); cell.appendChild(tileEl); floorLine.appendChild(cell);
+    });
+    floorSec.appendChild(floorLine); board.appendChild(floorSec);
+    el.appendChild(board);
+  });
+}
+
+initGame();
+</script>
+</body>
+</html>

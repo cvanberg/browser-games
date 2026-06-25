@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mastermind</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #1a1a2e;
+    color: #eee;
+    font-family: 'Segoe UI', sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    padding: 24px 16px;
+  }
+
+  h1 {
+    font-size: 2rem;
+    letter-spacing: 4px;
+    margin-bottom: 4px;
+    color: #e2b96f;
+    text-transform: uppercase;
+  }
+
+  .subtitle {
+    font-size: 0.8rem;
+    color: #888;
+    margin-bottom: 24px;
+    letter-spacing: 1px;
+  }
+
+  .game-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    max-width: 420px;
+  }
+
+  /* Each row */
+  .row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 6px 10px;
+    border-radius: 8px;
+    background: #16213e;
+    border: 1px solid #0f3460;
+    transition: background 0.2s;
+  }
+
+  .row.active-row {
+    background: #1e2f5a;
+    border-color: #e2b96f;
+  }
+
+  .row-number {
+    width: 22px;
+    text-align: center;
+    font-size: 0.75rem;
+    color: #555;
+    flex-shrink: 0;
+  }
+
+  .pegs {
+    display: flex;
+    gap: 8px;
+    flex: 1;
+    justify-content: center;
+  }
+
+  .peg {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #0f3460;
+    border: 2px solid #2a4a7f;
+    cursor: default;
+    transition: transform 0.1s, border-color 0.2s;
+    position: relative;
+  }
+
+  .peg.empty-slot {
+    background: #0d2240;
+  }
+
+  .peg.filled {
+    border-color: rgba(255,255,255,0.3);
+    box-shadow: inset 0 -3px 6px rgba(0,0,0,0.4), inset 0 3px 6px rgba(255,255,255,0.15);
+  }
+
+  .active-row .peg.empty-slot {
+    cursor: pointer;
+  }
+
+  .active-row .peg.empty-slot:hover {
+    border-color: #e2b96f;
+    transform: scale(1.08);
+  }
+
+  .active-row .peg.filled {
+    cursor: pointer;
+  }
+
+  .active-row .peg.filled:hover {
+    transform: scale(1.08);
+    border-color: rgba(255,255,255,0.6);
+  }
+
+  /* Feedback mini-pegs */
+  .feedback {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 4px;
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+  }
+
+  .mini-peg {
+    border-radius: 50%;
+    background: #0f3460;
+    border: 1px solid #1a3a6e;
+  }
+
+  .mini-peg.black { background: #222; border-color: #555; }
+  .mini-peg.white { background: #eee; border-color: #ccc; }
+
+  /* Submit button per row */
+  .submit-btn {
+    background: #e2b96f;
+    color: #1a1a2e;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-weight: bold;
+    font-size: 0.75rem;
+    cursor: pointer;
+    flex-shrink: 0;
+    letter-spacing: 0.5px;
+    transition: background 0.15s, transform 0.1s;
+  }
+
+  .submit-btn:hover { background: #f0ce8a; transform: scale(1.03); }
+  .submit-btn:disabled { background: #555; color: #888; cursor: default; transform: none; }
+
+  /* Color picker */
+  .picker {
+    display: flex;
+    gap: 10px;
+    margin: 16px 0 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .color-choice {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 3px solid transparent;
+    transition: transform 0.15s, border-color 0.15s;
+    box-shadow: inset 0 -3px 6px rgba(0,0,0,0.4), inset 0 3px 6px rgba(255,255,255,0.15);
+  }
+
+  .color-choice:hover { transform: scale(1.12); }
+  .color-choice.selected { border-color: white; transform: scale(1.12); }
+
+  /* Status bar */
+  .status {
+    margin: 12px 0;
+    font-size: 1rem;
+    font-weight: 600;
+    letter-spacing: 1px;
+    min-height: 28px;
+    text-align: center;
+  }
+
+  /* Secret reveal */
+  .secret-reveal {
+    display: flex;
+    gap: 8px;
+    margin: 8px 0;
+  }
+
+  .secret-reveal .peg {
+    width: 36px;
+    height: 36px;
+    cursor: default !important;
+  }
+
+  /* New game button */
+  .new-game-btn {
+    background: transparent;
+    color: #e2b96f;
+    border: 2px solid #e2b96f;
+    border-radius: 8px;
+    padding: 10px 28px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    letter-spacing: 2px;
+    margin-top: 12px;
+    transition: background 0.15s, color 0.15s;
+  }
+
+  .new-game-btn:hover { background: #e2b96f; color: #1a1a2e; }
+
+  /* Mode selector */
+  .mode-selector {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .mode-btn {
+    background: transparent;
+    border: 2px solid #0f3460;
+    border-radius: 8px;
+    color: #888;
+    padding: 8px 18px;
+    font-size: 0.82rem;
+    font-weight: bold;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: all 0.15s;
+  }
+
+  .mode-btn:hover { border-color: #e2b96f; color: #e2b96f; }
+
+  .mode-btn.active {
+    background: #0f3460;
+    border-color: #e2b96f;
+    color: #e2b96f;
+  }
+
+  /* Legend */
+  .legend {
+    margin-top: 20px;
+    font-size: 0.72rem;
+    color: #666;
+    text-align: center;
+    line-height: 1.8;
+  }
+
+  .legend span { color: #999; }
+</style>
+</head>
+<body>
+
+<h1>Mastermind</h1>
+<p class="subtitle" id="subtitle">Crack the hidden 4-color code in 10 tries</p>
+
+<div class="mode-selector">
+  <button class="mode-btn active" id="mode-simple" onclick="setMode('simple')">SIMPLE</button>
+  <button class="mode-btn" id="mode-hard" onclick="setMode('hard')">HARD</button>
+</div>
+
+<div class="picker" id="picker"></div>
+
+<div class="status" id="status">Pick a color, then click a slot</div>
+
+<div class="game-area" id="board"></div>
+
+<div class="secret-reveal" id="secret-reveal" style="display:none"></div>
+
+<button class="new-game-btn" id="new-game-btn">NEW GAME</button>
+
+<div class="legend">
+  <span>■ Black peg</span> = right color, right position &nbsp;|&nbsp;
+  <span>□ White peg</span> = right color, wrong position
+</div>
+
+<script>
+const COLORS = [
+  { name: 'red',    hex: '#e74c3c' },
+  { name: 'orange', hex: '#e67e22' },
+  { name: 'yellow', hex: '#f1c40f' },
+  { name: 'green',  hex: '#2ecc71' },
+  { name: 'blue',   hex: '#3498db' },
+  { name: 'purple', hex: '#9b59b6' },
+];
+
+const PEGS = 4;
+const ROWS = 10;
+
+let secret = [];
+let currentRow = 0;
+let currentGuess = [];
+let selectedColor = null;
+let gameOver = false;
+let allowDuplicates = false;
+
+function setMode(mode) {
+  allowDuplicates = mode === 'hard';
+  document.getElementById('mode-simple').classList.toggle('active', mode === 'simple');
+  document.getElementById('mode-hard').classList.toggle('active', mode === 'hard');
+  document.getElementById('subtitle').textContent = allowDuplicates
+    ? 'Hard mode: colors can repeat — 10 tries'
+    : 'Simple mode: all colors are unique — 10 tries';
+  startGame();
+}
+
+function randomSecret() {
+  if (allowDuplicates) {
+    return Array.from({ length: PEGS }, () => COLORS[Math.floor(Math.random() * COLORS.length)]);
+  }
+  const shuffled = [...COLORS].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, PEGS);
+}
+
+function score(guess, secret) {
+  let blacks = 0, whites = 0;
+  const gLeft = [], sLeft = [];
+  for (let i = 0; i < PEGS; i++) {
+    if (guess[i].name === secret[i].name) blacks++;
+    else { gLeft.push(guess[i].name); sLeft.push(secret[i].name); }
+  }
+  for (const c of gLeft) {
+    const idx = sLeft.indexOf(c);
+    if (idx !== -1) { whites++; sLeft.splice(idx, 1); }
+  }
+  return { blacks, whites };
+}
+
+function buildPicker() {
+  const el = document.getElementById('picker');
+  el.innerHTML = '';
+  COLORS.forEach(c => {
+    const div = document.createElement('div');
+    div.className = 'color-choice';
+    div.style.background = c.hex;
+    div.title = c.name;
+    div.addEventListener('click', () => selectColor(c, div));
+    el.appendChild(div);
+  });
+}
+
+function selectColor(c, el) {
+  if (gameOver) return;
+  selectedColor = c;
+  document.querySelectorAll('.color-choice').forEach(d => d.classList.remove('selected'));
+  el.classList.add('selected');
+  setStatus('Click a slot to place ' + c.name);
+}
+
+function buildBoard() {
+  const board = document.getElementById('board');
+  board.innerHTML = '';
+  for (let r = 0; r < ROWS; r++) {
+    const row = document.createElement('div');
+    row.className = 'row' + (r === 0 ? ' active-row' : '');
+    row.id = 'row-' + r;
+
+    const num = document.createElement('div');
+    num.className = 'row-number';
+    num.textContent = ROWS - r;
+    row.appendChild(num);
+
+    const pegs = document.createElement('div');
+    pegs.className = 'pegs';
+    for (let p = 0; p < PEGS; p++) {
+      const peg = document.createElement('div');
+      peg.className = 'peg empty-slot';
+      peg.id = `peg-${r}-${p}`;
+      peg.addEventListener('click', () => placePeg(r, p));
+      pegs.appendChild(peg);
+    }
+    row.appendChild(pegs);
+
+    const feedback = document.createElement('div');
+    feedback.className = 'feedback';
+    feedback.id = 'feedback-' + r;
+    for (let i = 0; i < PEGS; i++) {
+      const mp = document.createElement('div');
+      mp.className = 'mini-peg';
+      feedback.appendChild(mp);
+    }
+    row.appendChild(feedback);
+
+    const btn = document.createElement('button');
+    btn.className = 'submit-btn';
+    btn.textContent = 'CHECK';
+    btn.disabled = true;
+    btn.id = 'btn-' + r;
+    btn.addEventListener('click', () => submitGuess(r));
+    row.appendChild(btn);
+
+    board.appendChild(row);
+  }
+}
+
+function placePeg(row, pos) {
+  if (gameOver || row !== currentRow) return;
+
+  const peg = document.getElementById(`peg-${row}-${pos}`);
+
+  if (currentGuess[pos]) {
+    currentGuess[pos] = null;
+    peg.style.background = '';
+    peg.classList.remove('filled');
+    peg.classList.add('empty-slot');
+    document.getElementById('btn-' + row).disabled = true;
+    setStatus('Slot cleared — pick a color to refill it.');
+    return;
+  }
+
+  if (!selectedColor) { setStatus('Pick a color first!'); return; }
+
+  currentGuess[pos] = selectedColor;
+  peg.style.background = selectedColor.hex;
+  peg.classList.remove('empty-slot');
+  peg.classList.add('filled');
+
+  const filled = currentGuess.filter(Boolean).length;
+  document.getElementById('btn-' + row).disabled = filled < PEGS;
+
+  if (filled < PEGS) setStatus(`${PEGS - filled} more slot${PEGS - filled > 1 ? 's' : ''} to fill`);
+  else setStatus('Ready! Hit CHECK or change a color.');
+}
+
+function submitGuess(row) {
+  if (currentGuess.filter(Boolean).length < PEGS) return;
+
+  const guess = [...currentGuess];
+  const { blacks, whites } = score(guess, secret);
+
+  // Render feedback
+  const fb = document.getElementById('feedback-' + row);
+  const minis = fb.querySelectorAll('.mini-peg');
+  let idx = 0;
+  for (let b = 0; b < blacks; b++) minis[idx++].classList.add('black');
+  for (let w = 0; w < whites; w++) minis[idx++].classList.add('white');
+
+  // Disable row
+  document.getElementById('btn-' + row).disabled = true;
+  document.getElementById('row-' + row).classList.remove('active-row');
+
+  if (blacks === PEGS) {
+    setStatus('🎉 You cracked the code!', '#2ecc71');
+    gameOver = true;
+    return;
+  }
+
+  currentRow++;
+  currentGuess = [];
+
+  if (currentRow >= ROWS) {
+    setStatus('No more guesses. The code was:', '#e74c3c');
+    gameOver = true;
+    showSecret();
+    return;
+  }
+
+  document.getElementById('row-' + currentRow).classList.add('active-row');
+  setStatus(`${blacks} black, ${whites} white — keep going!`);
+}
+
+function showSecret() {
+  const el = document.getElementById('secret-reveal');
+  el.innerHTML = '';
+  el.style.display = 'flex';
+  secret.forEach(c => {
+    const peg = document.createElement('div');
+    peg.className = 'peg filled';
+    peg.style.background = c.hex;
+    el.appendChild(peg);
+  });
+}
+
+function setStatus(msg, color) {
+  const el = document.getElementById('status');
+  el.textContent = msg;
+  el.style.color = color || '#eee';
+}
+
+function startGame() {
+  secret = randomSecret();
+  currentRow = 0;
+  currentGuess = [];
+  selectedColor = null;
+  gameOver = false;
+  document.getElementById('secret-reveal').style.display = 'none';
+  document.getElementById('secret-reveal').innerHTML = '';
+  document.querySelectorAll('.color-choice').forEach(d => d.classList.remove('selected'));
+  buildBoard();
+  setStatus('Pick a color, then click a slot');
+}
+
+document.getElementById('new-game-btn').addEventListener('click', startGame);
+
+buildPicker();
+startGame();
+</script>
+</body>
+</html>
