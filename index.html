@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Games</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #1a1a2e; color: #eee;
+    font-family: 'Segoe UI', sans-serif;
+    display: flex; flex-direction: column; align-items: center;
+    min-height: 100vh; padding: 48px 24px; gap: 20px;
+  }
+  h1 { font-size: 1.4rem; letter-spacing: 4px; color: #e2b96f; margin-bottom: 8px; }
+  a {
+    display: block; width: 100%; max-width: 320px;
+    background: #162a45; border: 2px solid #2a4a7f;
+    border-radius: 12px; padding: 24px;
+    text-decoration: none; color: #eee;
+    transition: border-color 0.15s, transform 0.1s;
+  }
+  a:hover { border-color: #e2b96f; transform: scale(1.02); }
+  a h2 { font-size: 1.2rem; letter-spacing: 2px; color: #e2b96f; margin-bottom: 6px; }
+  a p { font-size: 0.82rem; color: #888; }
+</style>
+</head>
+<body>
+<h1>GAMES</h1>
+<a href="tile-game.html">
+  <h2>TILE GAME</h2>
+  <p>2-player hotseat or vs AI · Draft and place tiles to complete your wall</p>
+</a>
+<a href="mastermind.html">
+  <h2>MASTERMIND</h2>
+  <p>Crack the hidden 4-color code in 10 tries</p>
+</a>
+</body>
+</html>

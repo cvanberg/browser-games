@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Azul</title>
+<title>Tile Game</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
@@ -83,7 +83,7 @@ h1 {
 .board-main { display: flex; gap: 5px; align-items: flex-start; margin-bottom: 8px; }
 
 /* Pattern lines */
-.pattern-lines { display: flex; flex-direction: column; gap: 3px; }
+.pattern-lines { display: flex; flex-direction: column; gap: 3px; align-items: flex-end; }
 .pattern-row {
   display: flex; gap: 3px; justify-content: flex-end; align-items: center;
   height: 26px; padding: 0 3px; border-radius: 4px; position: relative;
@@ -121,20 +121,58 @@ h1 {
 .floor-tile { width: 22px; height: 22px; border-radius: 3px; background: #0d2240; border: 1px solid #1a3a6e; }
 .floor-tile.filled { border-color: rgba(255,255,255,0.22); }
 
+/* AI animation */
+@keyframes ai-pick {
+  0%   { transform: scale(1);    filter: brightness(1); }
+  50%  { transform: scale(1.28); filter: brightness(1.6) drop-shadow(0 0 5px rgba(255,255,255,0.8)); }
+  100% { transform: scale(1);    filter: brightness(1); }
+}
+.ai-highlight { animation: ai-pick 0.38s ease-in-out infinite; }
+
+@keyframes ai-place {
+  0%   { background: rgba(226,185,111,0.08); }
+  100% { background: rgba(226,185,111,0.38); }
+}
+.ai-target { animation: ai-place 0.38s ease-in-out infinite alternate; }
+.ai-target::after {
+  content: ''; position: absolute; inset: 0;
+  border: 1px solid #e2b96f; border-radius: 4px; pointer-events: none;
+}
+
+/* Tiling preview highlights */
+.pattern-row.will-score { background: rgba(226,185,111,0.1); }
+.pattern-row.will-score::after { content:''; position:absolute; inset:0; border:1px solid #e2b96f99; border-radius:4px; pointer-events:none; }
+@keyframes will-place-pulse { 0%{opacity:0.25;} 100%{opacity:0.82;} }
+.wall-cell.will-place { animation: will-place-pulse 0.5s ease-in-out infinite alternate; }
+.floor-tile.will-penalize { border-color:#e74c3c !important; box-shadow:0 0 5px rgba(231,76,60,0.65); }
+.wall-cell.just-placed { box-shadow:0 0 8px rgba(255,255,255,0.5); border-color:rgba(255,255,255,0.7) !important; }
+
+/* Mode selector */
+.mode-selector { display:flex; gap:10px; justify-content:center; margin-bottom:10px; }
+.mode-btn { background:transparent; border:2px solid #2a4a7f; color:#668; border-radius:8px; padding:5px 14px; font-size:0.78rem; font-weight:bold; cursor:pointer; letter-spacing:1px; transition:all 0.15s; }
+.mode-btn:hover { border-color:#e2b96f; color:#e2b96f; }
+.mode-btn.active { border-color:#e2b96f; color:#e2b96f; background:#0f2035; }
+
 /* Help legend */
 .legend { margin-top: 14px; font-size: 0.68rem; color: #446; text-align: center; line-height: 1.9; }
 .legend span { color: #668; }
 </style>
 </head>
 <body>
-<h1>AZUL</h1>
+<h1>TILE GAME</h1>
 <p class="subtitle">2-PLAYER HOTSEAT</p>
+<div class="mode-selector">
+  <button class="mode-btn active" id="mode-2p" onclick="setMode(false)">2 PLAYERS</button>
+  <button class="mode-btn" id="mode-ai" onclick="setMode(true)">VS AI</button>
+  <button class="mode-btn active" id="sound-btn" onclick="toggleSound()">♪ SOUND</button>
+</div>
 
 <div class="status-bar" id="status-bar"></div>
 <div class="selected-info" id="selected-info"></div>
 <div class="tiling-results" id="tiling-results"></div>
 <div class="actions" id="actions"></div>
 <div class="market-area" id="market"></div>
+<noscript><p style="color:#e74c3c;text-align:center;padding:20px;font-size:1rem">JavaScript is required. On iPhone: tap the share icon → <strong>Open in Safari</strong>.</p></noscript>
 <div class="boards" id="boards"></div>
 <div class="legend">
   <span>Pattern lines</span> (left) fill right-to-left · Complete row = 1 tile moves to <span>wall</span> (right) ·
@@ -156,10 +194,105 @@ const WALL_PATTERN = [
   ['yellow','red','green','white','blue'],
 ];
 const FLOOR_PENALTIES = [-1,-1,-2,-2,-2,-3,-3];
-const FACTORY_COUNT = 5;
+const FACTORY_COUNT = 4;
 
 let bag, discard, factories, center, centerHasFirstToken;
 let players, currentPlayer, round, phase, selection, tilingLog;
+let vsAI = false, aiThinking = false, aiAnimStep = 0, aiMove = null, justPlaced = [];
+
+// ---- Audio ----
+let audioCtx = null;
+let soundOn = true;
+
+function toggleSound() {
+  soundOn = !soundOn;
+  const btn = document.getElementById('sound-btn');
+  btn.textContent = soundOn ? '♪ SOUND' : '♪ OFF';
+  btn.classList.toggle('active', soundOn);
+}
+
+function getAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+
+function playClick() {
+  if (!soundOn) return;
+  const ctx = getAudio(), now = ctx.currentTime;
+  // tonal body
+  const osc = ctx.createOscillator();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(950, now);
+  osc.frequency.exponentialRampToValueAtTime(480, now + 0.07);
+  const g1 = ctx.createGain();
+  g1.gain.setValueAtTime(0.18, now);
+  g1.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+  osc.connect(g1); g1.connect(ctx.destination);
+  osc.start(now); osc.stop(now + 0.08);
+  // noise transient
+  const len = Math.floor(ctx.sampleRate * 0.028);
+  const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) d[i] = (Math.random()*2-1) * (1 - i/len);
+  const ns = ctx.createBufferSource();
+  ns.buffer = buf;
+  const hpf = ctx.createBiquadFilter();
+  hpf.type = 'highpass'; hpf.frequency.value = 2800;
+  const g2 = ctx.createGain();
+  g2.gain.value = 0.22;
+  ns.connect(hpf); hpf.connect(g2); g2.connect(ctx.destination);
+  ns.start(now); ns.stop(now + 0.028);
+}
+
+function playFloor() {
+  if (!soundOn) return;
+  const ctx = getAudio(), now = ctx.currentTime;
+  const osc = ctx.createOscillator();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(190, now);
+  osc.frequency.exponentialRampToValueAtTime(65, now + 0.22);
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(0.16, now);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+  osc.connect(gain); gain.connect(ctx.destination);
+  osc.start(now); osc.stop(now + 0.22);
+}
+
+function playChime(delay) {
+  if (!soundOn) return;
+  const ctx = getAudio(), t = ctx.currentTime + delay;
+  // bell partial series
+  [[700, 1.0, 1.1], [1928, 0.5, 0.9], [3780, 0.22, 0.6]].forEach(([freq, amp, dur]) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0, t);
+    gain.gain.linearRampToValueAtTime(0.1 * amp, t + 0.006);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.start(t); osc.stop(t + dur);
+  });
+}
+
+function playWin() {
+  if (!soundOn) return;
+  const ctx = getAudio();
+  [523, 659, 784, 1047].forEach((freq, i) => {
+    const t = ctx.currentTime + i * 0.13;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0, t);
+    gain.gain.linearRampToValueAtTime(0.11, t + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + 1.6);
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.start(t); osc.stop(t + 1.6);
+  });
+}
+// ---- End Audio ----
 
 function initGame() {
   bag = [];
@@ -173,11 +306,19 @@ function initGame() {
     wall: Array.from({length:5}, () => Array(5).fill(false)),
     floor: [],
   }));
+  if (vsAI) players[1].name = 'AI';
   round = 1; currentPlayer = 0; phase = 'draft';
-  selection = null; tilingLog = null;
+  selection = null; tilingLog = null; aiThinking = false;
   centerHasFirstToken = true; center = [];
   fillFactories();
   render();
+}
+
+function setMode(ai) {
+  vsAI = ai;
+  document.getElementById('mode-2p').classList.toggle('active', !ai);
+  document.getElementById('mode-ai').classList.toggle('active', ai);
+  initGame();
 }
 
 function shuffle(a) {
@@ -228,7 +369,7 @@ function applySelection(color, tiles) {
 }
 
 function clickFactory(fIdx, color) {
-  if (phase !== 'draft') return;
+  if (phase !== 'draft' || aiThinking || aiAnimStep > 0) return;
   const factory = factories[fIdx];
   const taken = factory.filter(t => t === color);
   if (!taken.length) return;
@@ -238,7 +379,7 @@ function clickFactory(fIdx, color) {
 }
 
 function clickCenter(color) {
-  if (phase !== 'draft') return;
+  if (phase !== 'draft' || aiThinking || aiAnimStep > 0) return;
   const taken = center.filter(t => t === color);
   if (!taken.length) return;
   center = center.filter(t => t !== color);
@@ -263,6 +404,8 @@ function placeTiles(pIdx, lineIdx) {
     if (pl.floor.length < 7) pl.floor.push(selection.color); else discard.push(selection.color);
   }
   selection = null;
+  playClick();
+  if (overflow > 0) setTimeout(playFloor, 90);
   afterPlace();
 }
 
@@ -273,21 +416,42 @@ function floorAll() {
     if (pl.floor.length < 7) pl.floor.push(t); else discard.push(t);
   }
   selection = null;
+  playFloor();
   afterPlace();
 }
 
 function afterPlace() {
   if (allEmpty()) {
-    doWallTiling();
+    phase = 'tiling-preview';
+    render();
+    return;
   } else {
     currentPlayer = 1 - currentPlayer;
     phase = 'draft';
+    if (vsAI && currentPlayer === 1) {
+      aiThinking = true;
+      render();
+      setTimeout(() => { aiThinking = false; doAITurn(); }, 600);
+      return;
+    }
+    render();
   }
+}
+
+function scoreNow() {
+  let n = 0;
+  players.forEach(pl => {
+    pl.patternLines.forEach((line, row) => {
+      if (line.count === row+1 && line.color) { playChime(n * 0.2); n++; }
+    });
+  });
+  doWallTiling();
   render();
 }
 
 function doWallTiling() {
   tilingLog = [];
+  justPlaced = [];
   let nextFirst = null;
 
   players.forEach((pl, pIdx) => {
@@ -297,6 +461,7 @@ function doWallTiling() {
       if (line.count === row+1 && line.color) {
         const col = WALL_PATTERN[row].indexOf(line.color);
         pl.wall[row][col] = true;
+        justPlaced.push({pIdx, row, col});
         const pts = scoreWallPlacement(pl, row, col);
         pl.score += pts;
         log.gained += pts;
@@ -313,6 +478,7 @@ function doWallTiling() {
     });
     if (pl.floor.includes('first')) nextFirst = pIdx;
     log.penaltyAmt = penalty;
+    log.floor = [...pl.floor];
     pl.score = Math.max(0, pl.score + penalty);
     pl.floor = [];
     log.scoreAfter = pl.score;
@@ -327,6 +493,7 @@ function doWallTiling() {
     // Update log scores after bonuses
     players.forEach((pl, i) => { tilingLog[i].scoreAfter = pl.score; });
     phase = 'over';
+    setTimeout(playWin, 400);
   } else {
     phase = 'tiling';
   }
@@ -359,6 +526,12 @@ function proceedToNextRound() {
   centerHasFirstToken = true; center = [];
   phase = 'draft'; selection = null; tilingLog = null;
   fillFactories();
+  if (vsAI && currentPlayer === 1) {
+    aiThinking = true;
+    render();
+    setTimeout(() => { aiThinking = false; doAITurn(); }, 600);
+    return;
+  }
   render();
 }
 
@@ -376,13 +549,30 @@ function dot(color, size=12, radius=3) {
 function renderStatus() {
   const el = document.getElementById('status-bar');
   if (phase==='draft') {
-    el.textContent = `Round ${round}  ·  ${players[currentPlayer].name}'s turn — pick tiles from a factory or center`;
-    el.style.color = '#eee';
+    if (aiAnimStep === 1 && aiMove) {
+      const src = aiMove.source === 'factory' ? `factory ${aiMove.factoryIdx+1}` : 'center';
+      el.innerHTML = `Round ${round}  ·  AI takes ${aiMove.count}× ${dot(aiMove.color,12,2)} from ${src}`;
+      el.style.color = '#aaa';
+    } else if (aiAnimStep === 2 && aiMove) {
+      el.textContent = aiMove.lineIdx === -1
+        ? `Round ${round}  ·  AI sends tiles to the floor`
+        : `Round ${round}  ·  AI places on row ${aiMove.lineIdx+1}`;
+      el.style.color = '#aaa';
+    } else if (aiThinking) {
+      el.textContent = `Round ${round}  ·  AI is thinking...`;
+      el.style.color = '#888';
+    } else {
+      el.textContent = `Round ${round}  ·  ${players[currentPlayer].name}'s turn — pick tiles from a factory or center`;
+      el.style.color = '#eee';
+    }
   } else if (phase==='place') {
     el.textContent = `${players[currentPlayer].name} — click a highlighted row to place tiles`;
     el.style.color = '#e2b96f';
+  } else if (phase==='tiling-preview') {
+    el.textContent = `Round ${round} complete — gold rows will score, red floor tiles will penalize`;
+    el.style.color = '#e2b96f';
   } else if (phase==='tiling') {
-    el.textContent = `Round ${round} complete — review scoring, then start next round`;
+    el.textContent = `Round ${round} scored — review results, then start next round`;
     el.style.color = '#2ecc71';
   } else if (phase==='over') {
     const w = players[0].score > players[1].score ? players[0] :
@@ -410,7 +600,9 @@ function renderTilingResults() {
       html += log.moved.map(m => `${dot(m.color,10,2)}+${m.pts}`).join(' ');
     } else { html += 'no tiles placed'; }
     if (log.penaltyAmt<0) html+=` <span style="color:#e74c3c">${log.penaltyAmt} floor</span>`;
-    html+=` → <strong>${log.scoreAfter} pts</strong></div>`;
+    const net = log.gained + log.penaltyAmt;
+    const netStr = net >= 0 ? `+${net}` : `${net}`;
+    html+=` = <strong>${netStr}</strong> → <strong>${log.scoreAfter} pts</strong></div>`;
   });
   if (phase==='over') html+='<div style="margin-top:4px;color:#668;font-size:0.75rem">End-game bonuses applied (+2 row / +7 col / +10 color set)</div>';
   el.innerHTML=html;
@@ -422,6 +614,11 @@ function renderActions() {
   if (phase==='place') {
     const b=document.createElement('button');
     b.className='btn danger'; b.textContent='FLOOR ALL'; b.onclick=floorAll;
+    el.appendChild(b);
+  }
+  if (phase==='tiling-preview') {
+    const b=document.createElement('button');
+    b.className='btn'; b.textContent='SCORE →'; b.onclick=scoreNow;
     el.appendChild(b);
   }
   if (phase==='tiling') {
@@ -451,6 +648,8 @@ function renderMarket() {
       if (i<tiles.length) {
         cell.className='factory-tile';
         cell.style.background=HEX[tiles[i]]; cell.title=tiles[i];
+        if (aiAnimStep===1 && aiMove && aiMove.source==='factory' && aiMove.factoryIdx===fIdx && tiles[i]===aiMove.color)
+          cell.classList.add('ai-highlight');
         if (phase==='draft') cell.onclick=()=>clickFactory(fIdx,tiles[i]);
       }
       circle.appendChild(cell);
@@ -472,6 +671,8 @@ function renderMarket() {
     center.filter(t=>t===color).forEach(()=>{
       const tile=document.createElement('div');
       tile.className='center-tile'; tile.style.background=HEX[color]; tile.title=color;
+      if (aiAnimStep===1 && aiMove && aiMove.source==='center' && color===aiMove.color)
+        tile.classList.add('ai-highlight');
       if (phase==='draft') tile.onclick=()=>clickCenter(color);
       pool.appendChild(tile);
     });
@@ -509,6 +710,10 @@ function renderBoards() {
         rowEl.onclick=()=>placeTiles(pIdx,lineIdx);
         rowEl.title=`Row ${lineIdx+1} (${lineIdx+1-line.count} space${lineIdx-line.count?'s':''} left)`;
       }
+      if (aiAnimStep===2 && aiMove && pIdx===1 && lineIdx===aiMove.lineIdx)
+        rowEl.classList.add('ai-target');
+      if (phase==='tiling-preview' && line.count===lineIdx+1 && line.color)
+        rowEl.classList.add('will-score');
       for (let i=0;i<lineIdx+1;i++) {
         const cell=document.createElement('div');
         cell.className='pattern-cell'+(i<line.count?' filled':'');
@@ -530,6 +735,13 @@ function renderBoards() {
         cell.className='wall-cell'+(pl.wall[r][c]?' filled':'');
         cell.style.background=HEX[WALL_PATTERN[r][c]];
         cell.title=WALL_PATTERN[r][c]+(pl.wall[r][c]?' ✓':'');
+        if (phase==='tiling-preview') {
+          const pLine=pl.patternLines[r];
+          if (pLine.count===r+1 && pLine.color && WALL_PATTERN[r].indexOf(pLine.color)===c && !pl.wall[r][c])
+            cell.classList.add('will-place');
+        }
+        if (phase==='tiling' && justPlaced.some(jp=>jp.pIdx===pIdx&&jp.row===r&&jp.col===c))
+          cell.classList.add('just-placed');
         rowEl.appendChild(cell);
       }
       wallEl.appendChild(rowEl);
@@ -538,15 +750,17 @@ function renderBoards() {
     board.appendChild(main);
 
     // Floor
+    const displayFloor = (phase==='tiling' && tilingLog) ? tilingLog[pIdx].floor : pl.floor;
     const floorSec=document.createElement('div'); floorSec.className='floor-section';
     const floorLine=document.createElement('div'); floorLine.className='floor-line';
     FLOOR_PENALTIES.forEach((pen,i)=>{
       const cell=document.createElement('div'); cell.className='floor-cell';
       const penEl=document.createElement('div'); penEl.className='floor-penalty'; penEl.textContent=pen;
       const tileEl=document.createElement('div');
-      tileEl.className='floor-tile'+(i<pl.floor.length?' filled':'');
-      if (i<pl.floor.length) {
-        const t=pl.floor[i]; tileEl.style.background=t==='first'?'#e2b96f':HEX[t];
+      tileEl.className='floor-tile'+(i<displayFloor.length?' filled':'');
+      if (i<displayFloor.length) {
+        const t=displayFloor[i]; tileEl.style.background=t==='first'?'#e2b96f':HEX[t];
+        if (phase==='tiling-preview') tileEl.classList.add('will-penalize');
       }
       cell.appendChild(penEl); cell.appendChild(tileEl); floorLine.appendChild(cell);
     });
@@ -555,7 +769,172 @@ function renderBoards() {
   });
 }
 
-initGame();
+// ---- AI ----
+
+function doAITurn() {
+  const move = findBestMove();
+  if (!move) { render(); return; }
+
+  // Step 1: highlight source tiles
+  aiMove = move;
+  aiAnimStep = 1;
+  render();
+
+  setTimeout(() => {
+    // Step 2: highlight target row (skip if flooring all)
+    if (move.lineIdx !== -1) {
+      aiAnimStep = 2;
+      render();
+      setTimeout(() => { aiAnimStep = 0; aiMove = null; executeAIMove(move); }, 1300);
+    } else {
+      aiAnimStep = 0; aiMove = null; executeAIMove(move);
+    }
+  }, 1300);
+}
+
+function executeAIMove(move) {
+  const ai = players[1];
+  let tiles;
+  if (move.source === 'factory') {
+    tiles = factories[move.factoryIdx].filter(t => t === move.color);
+    center.push(...factories[move.factoryIdx].filter(t => t !== move.color));
+    factories[move.factoryIdx] = [];
+  } else {
+    tiles = center.filter(t => t === move.color);
+    center = center.filter(t => t !== move.color);
+    if (centerHasFirstToken) {
+      centerHasFirstToken = false;
+      if (ai.floor.length < 7) ai.floor.push('first');
+    }
+  }
+  if (move.lineIdx === -1) {
+    for (const t of tiles) {
+      if (ai.floor.length < 7) ai.floor.push(t); else discard.push(t);
+    }
+    playFloor();
+  } else {
+    const line = ai.patternLines[move.lineIdx];
+    const space = (move.lineIdx + 1) - line.count;
+    const toPlace = Math.min(tiles.length, space);
+    line.color = move.color;
+    line.count += toPlace;
+    const overflow = tiles.length - toPlace;
+    for (let i = toPlace; i < tiles.length; i++) {
+      if (ai.floor.length < 7) ai.floor.push(move.color); else discard.push(move.color);
+    }
+    playClick();
+    if (overflow > 0) setTimeout(playFloor, 90);
+  }
+  afterPlace();
+}
+
+function findBestMove() {
+  const ai = players[1], human = players[0];
+  let bestScore = -Infinity, bestMove = null;
+  const candidates = [];
+  factories.forEach((tiles, fIdx) => {
+    if (!tiles.length) return;
+    [...new Set(tiles)].forEach(color => {
+      candidates.push({color, count: tiles.filter(t=>t===color).length, source:'factory', factoryIdx:fIdx});
+    });
+  });
+  [...new Set(center)].forEach(color => {
+    candidates.push({color, count: center.filter(t=>t===color).length, source:'center'});
+  });
+
+  for (const cand of candidates) {
+    let hasValid = false;
+    for (let li = 0; li < 5; li++) {
+      if (!aiLineValid(ai, li, cand.color)) continue;
+      hasValid = true;
+      const s = aiEvalPlace(ai, human, cand.color, cand.count, li, cand.source==='center');
+      if (s > bestScore) { bestScore = s; bestMove = {...cand, lineIdx: li}; }
+    }
+    const fs = aiEvalFloor(ai, cand.color, cand.count, cand.source==='center')
+             + aiEvalBlock(human, cand.color, cand.count) * 0.5
+             - (hasValid ? 8 : 0);
+    if (fs > bestScore) { bestScore = fs; bestMove = {...cand, lineIdx: -1}; }
+  }
+  return bestMove;
+}
+
+function aiLineValid(player, lineIdx, color) {
+  const line = player.patternLines[lineIdx];
+  if (line.count === lineIdx+1) return false;
+  if (line.color && line.color !== color) return false;
+  if (player.wall[lineIdx][WALL_PATTERN[lineIdx].indexOf(color)]) return false;
+  return true;
+}
+
+function aiEvalPlace(ai, human, color, count, lineIdx, fromCenter) {
+  let score = 0;
+  const line = ai.patternLines[lineIdx];
+  const capacity = lineIdx + 1;
+  const space = capacity - line.count;
+  const placed = Math.min(count, space);
+  const overflow = count - placed;
+  const newCount = line.count + placed;
+  const wallCol = WALL_PATTERN[lineIdx].indexOf(color);
+
+  // Floor from first token then overflow
+  let fp = ai.floor.length;
+  if (fromCenter && centerHasFirstToken) { if (fp < 7) score += FLOOR_PENALTIES[fp]; fp++; }
+  for (let i = 0; i < overflow; i++) { if (fp < 7) score += FLOOR_PENALTIES[fp++]; }
+
+  if (newCount === capacity) {
+    score += aiWallScore(ai, lineIdx, wallCol) + aiEndBonus(ai, lineIdx, wallCol);
+  } else {
+    const potential = aiWallScore(ai, lineIdx, wallCol) + aiEndBonus(ai, lineIdx, wallCol);
+    score += (newCount / capacity) * potential * 0.35;
+    if (newCount === capacity - 1) score += 0.5;
+  }
+  score += aiEvalBlock(human, color, count) * 0.5;
+  return score;
+}
+
+function aiEvalFloor(ai, color, count, fromCenter) {
+  let score = 0, fp = ai.floor.length;
+  if (fromCenter && centerHasFirstToken) { if (fp < 7) score += FLOOR_PENALTIES[fp]; fp++; }
+  for (let i = 0; i < count; i++) { if (fp < 7) score += FLOOR_PENALTIES[fp++]; }
+  return score;
+}
+
+function aiWallScore(player, row, col) {
+  let h=1,v=1,hasH=false,hasV=false;
+  for(let c=col-1;c>=0;c--){if(player.wall[row][c]){h++;hasH=true;}else break;}
+  for(let c=col+1;c<5;c++) {if(player.wall[row][c]){h++;hasH=true;}else break;}
+  for(let r=row-1;r>=0;r--){if(player.wall[r][col]){v++;hasV=true;}else break;}
+  for(let r=row+1;r<5;r++) {if(player.wall[r][col]){v++;hasV=true;}else break;}
+  if(!hasH&&!hasV) return 1;
+  return (hasH?h:0)+(hasV?v:0);
+}
+
+function aiEndBonus(player, row, col) {
+  let b = 0;
+  if (player.wall[row].filter(Boolean).length === 4) b += 2 * 0.8;
+  if (player.wall.filter(r=>r[col]).length === 4) b += 7 * 0.7;
+  const color = WALL_PATTERN[row][col];
+  let n = 0;
+  for (let r=0;r<5;r++) { const c=WALL_PATTERN[r].indexOf(color); if (player.wall[r][c]) n++; }
+  if (n === 4) b += 10 * 0.6;
+  return b;
+}
+
+function aiEvalBlock(opponent, color, count) {
+  let bonus = 0;
+  opponent.patternLines.forEach((line, li) => {
+    if (line.color === color && !opponent.wall[li][WALL_PATTERN[li].indexOf(color)]) {
+      bonus += Math.min(count, (li+1) - line.count) * 0.5;
+    }
+  });
+  return bonus;
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initGame);
+} else {
+  initGame();
+}
 </script>
 </body>
 </html>
