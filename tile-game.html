@@ -148,10 +148,11 @@ h1 {
 .wall-cell.just-placed { box-shadow:0 0 8px rgba(255,255,255,0.5); border-color:rgba(255,255,255,0.7) !important; }
 
 /* Mode selector */
-.mode-selector { display:flex; gap:10px; justify-content:center; margin-bottom:10px; }
+.mode-selector { display:flex; gap:10px; justify-content:center; margin-bottom:10px; align-items:center; }
 .mode-btn { background:transparent; border:2px solid #2a4a7f; color:#668; border-radius:8px; padding:5px 14px; font-size:0.78rem; font-weight:bold; cursor:pointer; letter-spacing:1px; transition:all 0.15s; }
 .mode-btn:hover { border-color:#e2b96f; color:#e2b96f; }
 .mode-btn.active { border-color:#e2b96f; color:#e2b96f; background:#0f2035; }
+.mode-select { background:#0f2035; border:2px solid #e2b96f; color:#e2b96f; border-radius:8px; padding:5px 14px; font-size:0.78rem; font-weight:bold; cursor:pointer; letter-spacing:1px; appearance:none; -webkit-appearance:none; outline:none; }
 
 /* Selected-tile highlight */
 .factory-tile.selected { box-shadow:0 0 0 2px #e2b96f, 0 0 9px rgba(226,185,111,0.55); transform:scale(1.18); filter:brightness(1.28); position:relative; z-index:2; }
@@ -166,8 +167,11 @@ h1 {
 <h1>TILE GAME</h1>
 <p class="subtitle">AZUL-STYLE TILE GAME</p>
 <div class="mode-selector">
-  <button class="mode-btn" id="mode-2p" onclick="setMode(false)">2 PLAYERS</button>
-  <button class="mode-btn active" id="mode-ai" onclick="setMode(true)">VS BOT</button>
+  <select class="mode-select" id="mode-select" onchange="setMode(this.value)">
+    <option value="2p">2 PLAYERS</option>
+    <option value="myopic" selected>MYOPIC BOT</option>
+    <option value="minimax">MINIMAX BOT</option>
+  </select>
   <button class="mode-btn active" id="sound-btn" onclick="toggleSound()">♪ SOUND</button>
 </div>
 
@@ -202,7 +206,7 @@ const FACTORY_COUNT = 5;
 
 let bag, discard, factories, center, centerHasFirstToken;
 let players, currentPlayer, round, phase, tilingLog;
-let vsAI = true, aiThinking = false, aiAnimStep = 0, aiMove = null, justPlaced = [];
+let botMode = 'myopic', aiThinking = false, aiAnimStep = 0, aiMove = null, justPlaced = [];
 let pendingSource = null, animating = false;
 
 // ---- Audio ----
@@ -307,7 +311,7 @@ function initGame() {
     wall: Array.from({length:5}, () => Array(5).fill(false)),
     floor: [],
   }));
-  if (vsAI) players[1].name = 'AI';
+  if (botMode) players[1].name = botMode === 'minimax' ? 'Minimax' : 'Bot';
   round = 1; currentPlayer = 0; phase = 'draft';
   pendingSource = null; animating = false; tilingLog = null; aiThinking = false;
   centerHasFirstToken = true; center = [];
@@ -315,10 +319,8 @@ function initGame() {
   render();
 }
 
-function setMode(ai) {
-  vsAI = ai;
-  document.getElementById('mode-2p').classList.toggle('active', !ai);
-  document.getElementById('mode-ai').classList.toggle('active', ai);
+function setMode(val) {
+  botMode = val === '2p' ? null : val;
   initGame();
 }
 
@@ -528,7 +530,7 @@ function afterPlace() {
   } else {
     currentPlayer = 1 - currentPlayer;
     phase = 'draft';
-    if (vsAI && currentPlayer === 1) {
+    if (botMode && currentPlayer === 1) {
       aiThinking = true;
       render();
       setTimeout(() => { aiThinking = false; doAITurn(); }, 600);
@@ -630,7 +632,7 @@ function proceedToNextRound() {
   centerHasFirstToken = true; center = [];
   phase = 'draft'; pendingSource = null; tilingLog = null;
   fillFactories();
-  if (vsAI && currentPlayer === 1) {
+  if (botMode && currentPlayer === 1) {
     aiThinking = true;
     render();
     setTimeout(() => { aiThinking = false; doAITurn(); }, 600);
@@ -666,7 +668,7 @@ function renderStatus() {
         : `Round ${round}  ·  AI places on row ${aiMove.lineIdx+1}`;
       el.style.color = '#aaa';
     } else if (aiThinking) {
-      el.textContent = `Round ${round}  ·  AI is thinking...`;
+      el.textContent = `Round ${round}  ·  ${players[1].name} is thinking...`;
       el.style.color = '#888';
     } else {
       el.textContent = `Round ${round}  ·  ${players[currentPlayer].name}'s turn — pick tiles from a factory or center`;
@@ -1101,7 +1103,7 @@ function aiLookAhead(ai, cand, lineIdx) {
   return best;
 }
 
-function findBestMove() {
+function findBestMoveMyopic() {
   const ai = players[1], human = players[0];
   let bestScore = -Infinity, bestMove = null;
 
@@ -1120,6 +1122,194 @@ function findBestMove() {
     if (fs > bestScore) { bestScore = fs; bestMove = {...cand, lineIdx: -1}; }
   }
   return bestMove;
+}
+
+// ---- Minimax bot ----
+
+function mmBuildState() {
+  return {
+    factories: factories.map(f => [...f]),
+    center:    [...center],
+    centerHasFirstToken,
+    players: players.map(p => ({
+      score:        p.score,
+      patternLines: p.patternLines.map(l => ({...l})),
+      wall:         p.wall.map(r => [...r]),
+      floor:        [...p.floor],
+    })),
+    currentPlayer,
+  };
+}
+
+function mmCloneState(s) {
+  return {
+    factories: s.factories.map(f => [...f]),
+    center:    [...s.center],
+    centerHasFirstToken: s.centerHasFirstToken,
+    players: s.players.map(p => ({
+      score:        p.score,
+      patternLines: p.patternLines.map(l => ({...l})),
+      wall:         p.wall.map(r => [...r]),
+      floor:        [...p.floor],
+    })),
+    currentPlayer: s.currentPlayer,
+  };
+}
+
+function mmAllEmpty(s) {
+  return s.factories.every(f => f.length === 0) && s.center.length === 0;
+}
+
+// Valid moves for s.currentPlayer
+function mmGetMoves(s) {
+  const moves = [];
+  const pl = s.players[s.currentPlayer];
+  const candidates = [];
+  s.factories.forEach((tiles, fIdx) => {
+    if (!tiles.length) return;
+    [...new Set(tiles)].forEach(color => {
+      candidates.push({source:'factory', factoryIdx:fIdx, color, count:tiles.filter(t=>t===color).length});
+    });
+  });
+  [...new Set(s.center)].forEach(color => {
+    candidates.push({source:'center', color, count:s.center.filter(t=>t===color).length});
+  });
+  for (const cand of candidates) {
+    let hasValid = false;
+    for (let li = 0; li < 5; li++) {
+      const line = pl.patternLines[li];
+      if (line.count === li+1) continue;
+      if (line.color && line.color !== cand.color) continue;
+      if (pl.wall[li][WALL_PATTERN[li].indexOf(cand.color)]) continue;
+      hasValid = true;
+      moves.push({...cand, lineIdx: li});
+    }
+    // Floor only when no valid line (avoids needless branching)
+    if (!hasValid) moves.push({...cand, lineIdx: -1});
+  }
+  return moves;
+}
+
+function mmApplyMove(s, move) {
+  const n = mmCloneState(s);
+  const pl = n.players[n.currentPlayer];
+
+  let srcTiles;
+  if (move.source === 'factory') {
+    srcTiles = n.factories[move.factoryIdx].filter(t => t === move.color);
+    n.center.push(...n.factories[move.factoryIdx].filter(t => t !== move.color));
+    n.factories[move.factoryIdx] = [];
+  } else {
+    srcTiles = n.center.filter(t => t === move.color);
+    n.center = n.center.filter(t => t !== move.color);
+    if (n.centerHasFirstToken) {
+      n.centerHasFirstToken = false;
+      if (pl.floor.length < 7) pl.floor.push('first');
+    }
+  }
+
+  if (move.lineIdx === -1) {
+    for (const t of srcTiles) { if (pl.floor.length < 7) pl.floor.push(t); }
+  } else {
+    const line = pl.patternLines[move.lineIdx];
+    const space = (move.lineIdx + 1) - line.count;
+    const toPlace = Math.min(srcTiles.length, space);
+    line.color = move.color; line.count += toPlace;
+    for (let i = toPlace; i < srcTiles.length; i++) { if (pl.floor.length < 7) pl.floor.push(move.color); }
+  }
+
+  n.currentPlayer = 1 - n.currentPlayer;
+  return n;
+}
+
+// Score a completed round: wall-tile all completed rows, apply floor, reset lines.
+function mmScoreRound(s) {
+  s.players.forEach(pl => {
+    pl.patternLines.forEach((line, row) => {
+      if (line.count === row+1 && line.color) {
+        const col = WALL_PATTERN[row].indexOf(line.color);
+        pl.wall[row][col] = true;
+        pl.score += scoreWallOnGrid(pl.wall, row, col);
+        line.color = null; line.count = 0;
+      }
+    });
+    let fp = 0;
+    for (const t of pl.floor) { if (fp < 7) { pl.score += FLOOR_PENALTIES[fp++]; } }
+    if (pl.score < 0) pl.score = 0;
+    pl.floor = [];
+  });
+}
+
+// Static evaluation: AI score advantage + partial-row potential + pending floor penalties.
+function mmEvaluate(s) {
+  const ai = s.players[1], hu = s.players[0];
+  let v = ai.score - hu.score;
+
+  for (let li = 0; li < 5; li++) {
+    const cap = li + 1;
+    const aiL = ai.patternLines[li], huL = hu.patternLines[li];
+    if (aiL.color) {
+      const col = WALL_PATTERN[li].indexOf(aiL.color);
+      if (!ai.wall[li][col]) v += (aiL.count / cap) * scoreWallOnGrid(ai.wall, li, col) * 0.38;
+    }
+    if (huL.color) {
+      const col = WALL_PATTERN[li].indexOf(huL.color);
+      if (!hu.wall[li][col]) v -= (huL.count / cap) * scoreWallOnGrid(hu.wall, li, col) * 0.38;
+    }
+  }
+
+  // Pending floor penalties
+  for (let i = 0; i < Math.min(ai.floor.length, 7); i++) v += FLOOR_PENALTIES[i];
+  for (let i = 0; i < Math.min(hu.floor.length, 7); i++) v -= FLOOR_PENALTIES[i];
+
+  return v;
+}
+
+function minimax(s, depth, alpha, beta) {
+  if (mmAllEmpty(s)) {
+    const s2 = mmCloneState(s);
+    mmScoreRound(s2);
+    return mmEvaluate(s2);
+  }
+  if (depth === 0) return mmEvaluate(s);
+
+  const moves = mmGetMoves(s);
+  if (!moves.length) return mmEvaluate(s);
+
+  if (s.currentPlayer === 1) { // AI — maximise
+    let best = -Infinity;
+    for (const mv of moves) {
+      const val = minimax(mmApplyMove(s, mv), depth - 1, alpha, beta);
+      if (val > best) best = val;
+      if (best > alpha) alpha = best;
+      if (beta <= alpha) break;
+    }
+    return best;
+  } else { // Human — minimise
+    let best = Infinity;
+    for (const mv of moves) {
+      const val = minimax(mmApplyMove(s, mv), depth - 1, alpha, beta);
+      if (val < best) best = val;
+      if (best < beta) beta = best;
+      if (beta <= alpha) break;
+    }
+    return best;
+  }
+}
+
+function findBestMoveMinMax() {
+  const state = mmBuildState();
+  const moves = mmGetMoves(state);
+  let bestScore = -Infinity, bestMove = null;
+  for (const mv of moves) {
+    const score = minimax(mmApplyMove(state, mv), 3, -Infinity, Infinity);
+    if (score > bestScore) { bestScore = score; bestMove = mv; }
+  }
+  return bestMove;
+}
+
+function findBestMove() {
+  return botMode === 'minimax' ? findBestMoveMinMax() : findBestMoveMyopic();
 }
 
 function aiLineValid(player, lineIdx, color) {
