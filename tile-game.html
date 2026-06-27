@@ -439,6 +439,10 @@ function commitToRow(pIdx, lineIdx) {
   const toPlace = Math.min(srcTiles.length, space);
   const overflow = srcTiles.length - toPlace;
 
+  // Individual destination cell rects (cells that will be filled by this move)
+  const allCells = rowEl ? rowEl.querySelectorAll('.pattern-cell') : [];
+  const cellRects = Array.from(allCells).slice(line.count, line.count + toPlace).map(c => c.getBoundingClientRect());
+
   // Commit source state — remainder tiles are NOT added to center yet;
   // each one is added only when its animation lands, so the center pool
   // stays empty until the tiles visually arrive there.
@@ -480,7 +484,8 @@ function commitToRow(pIdx, lineIdx) {
   if (srcCount === 0) { fillRow(); render(); }
 
   srcRects.forEach((rect, i) => {
-    if (rowRect) flyTile(rect, rowRect, color, i * STAGGER, onSrcLand);
+    const dest = i < cellRects.length ? cellRects[i] : rowRect;
+    if (dest) flyTile(rect, dest, color, i * STAGGER, onSrcLand);
     else setTimeout(onSrcLand, i * STAGGER + LAND);
   });
 
@@ -922,13 +927,23 @@ function doAITurn() {
     const rowRect  = rowEl  ? rowEl.getBoundingClientRect()  : null;
     const poolRect = poolEl ? poolEl.getBoundingClientRect() : null;
 
+    // Per-cell destination rects for the AI's target row
+    let cellRects = [];
+    if (rowEl && move.lineIdx >= 0) {
+      const aiLine = players[1].patternLines[move.lineIdx];
+      const tp     = Math.min(move.count, (move.lineIdx + 1) - aiLine.count);
+      cellRects = Array.from(rowEl.querySelectorAll('.pattern-cell'))
+                       .slice(aiLine.count, aiLine.count + tp)
+                       .map(c => c.getBoundingClientRect());
+    }
+
     aiAnimStep = 0; aiMove = null;
-    executeAIMove(move, {srcRects, remainderRects, rowRect, poolRect});
+    executeAIMove(move, {srcRects, remainderRects, rowRect, poolRect, cellRects});
   }, 850);
 }
 
 function executeAIMove(move, rects) {
-  const {srcRects = [], remainderRects = [], rowRect = null, poolRect = null} = rects || {};
+  const {srcRects = [], remainderRects = [], rowRect = null, poolRect = null, cellRects = []} = rects || {};
   const ai = players[1];
 
   // Commit source state — remainder tiles NOT added to center yet;
@@ -988,7 +1003,8 @@ function executeAIMove(move, rects) {
   if (srcCount === 0) { fillRow(); render(); }
 
   srcRects.forEach((rect, i) => {
-    if (rowRect) flyTile(rect, rowRect, move.color, i * STAGGER, onSrcLand);
+    const dest = i < cellRects.length ? cellRects[i] : rowRect;
+    if (dest) flyTile(rect, dest, move.color, i * STAGGER, onSrcLand);
     else setTimeout(onSrcLand, i * STAGGER + LAND);
   });
 
