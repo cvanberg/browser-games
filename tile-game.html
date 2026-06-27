@@ -153,6 +153,10 @@ h1 {
 .mode-btn:hover { border-color:#e2b96f; color:#e2b96f; }
 .mode-btn.active { border-color:#e2b96f; color:#e2b96f; background:#0f2035; }
 
+/* Selected-tile highlight */
+.factory-tile.selected { box-shadow:0 0 0 2px #e2b96f, 0 0 9px rgba(226,185,111,0.55); transform:scale(1.18); filter:brightness(1.28); position:relative; z-index:2; }
+.center-tile.selected  { box-shadow:0 0 0 2px #e2b96f, 0 0 9px rgba(226,185,111,0.55); transform:scale(1.18); filter:brightness(1.28); position:relative; z-index:2; }
+
 /* Help legend */
 .legend { margin-top: 14px; font-size: 0.68rem; color: #446; text-align: center; line-height: 1.9; }
 .legend span { color: #668; }
@@ -160,10 +164,10 @@ h1 {
 </head>
 <body>
 <h1>TILE GAME</h1>
-<p class="subtitle">2-PLAYER HOTSEAT</p>
+<p class="subtitle">AZUL-STYLE TILE GAME</p>
 <div class="mode-selector">
-  <button class="mode-btn active" id="mode-2p" onclick="setMode(false)">2 PLAYERS</button>
-  <button class="mode-btn" id="mode-ai" onclick="setMode(true)">VS AI</button>
+  <button class="mode-btn" id="mode-2p" onclick="setMode(false)">2 PLAYERS</button>
+  <button class="mode-btn active" id="mode-ai" onclick="setMode(true)">VS BOT</button>
   <button class="mode-btn active" id="sound-btn" onclick="toggleSound()">♪ SOUND</button>
 </div>
 
@@ -194,11 +198,12 @@ const WALL_PATTERN = [
   ['yellow','red','green','white','blue'],
 ];
 const FLOOR_PENALTIES = [-1,-1,-2,-2,-2,-3,-3];
-const FACTORY_COUNT = 4;
+const FACTORY_COUNT = 5;
 
 let bag, discard, factories, center, centerHasFirstToken;
-let players, currentPlayer, round, phase, selection, tilingLog;
-let vsAI = false, aiThinking = false, aiAnimStep = 0, aiMove = null, justPlaced = [];
+let players, currentPlayer, round, phase, tilingLog;
+let vsAI = true, aiThinking = false, aiAnimStep = 0, aiMove = null, justPlaced = [];
+let pendingSource = null, animating = false;
 
 // ---- Audio ----
 let audioCtx = null;
@@ -220,29 +225,36 @@ function getAudio() {
 function playClick() {
   if (!soundOn) return;
   const ctx = getAudio(), now = ctx.currentTime;
-  // tonal body
-  const osc = ctx.createOscillator();
-  osc.type = 'sine';
-  osc.frequency.setValueAtTime(950, now);
-  osc.frequency.exponentialRampToValueAtTime(480, now + 0.07);
-  const g1 = ctx.createGain();
-  g1.gain.setValueAtTime(0.18, now);
-  g1.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
-  osc.connect(g1); g1.connect(ctx.destination);
-  osc.start(now); osc.stop(now + 0.08);
-  // noise transient
-  const len = Math.floor(ctx.sampleRate * 0.028);
-  const buf = ctx.createBuffer(1, len, ctx.sampleRate);
-  const d = buf.getChannelData(0);
-  for (let i = 0; i < len; i++) d[i] = (Math.random()*2-1) * (1 - i/len);
-  const ns = ctx.createBufferSource();
-  ns.buffer = buf;
-  const hpf = ctx.createBiquadFilter();
-  hpf.type = 'highpass'; hpf.frequency.value = 2800;
-  const g2 = ctx.createGain();
-  g2.gain.value = 0.22;
-  ns.connect(hpf); hpf.connect(g2); g2.connect(ctx.destination);
-  ns.start(now); ns.stop(now + 0.028);
+  // Sharp impact transient — filtered noise burst (the "clack")
+  const clickLen = Math.floor(ctx.sampleRate * 0.007);
+  const clickBuf = ctx.createBuffer(1, clickLen, ctx.sampleRate);
+  const cd = clickBuf.getChannelData(0);
+  for (let i = 0; i < clickLen; i++) cd[i] = (Math.random()*2-1) * Math.pow(1 - i/clickLen, 2);
+  const clickSrc = ctx.createBufferSource(); clickSrc.buffer = clickBuf;
+  const clickBpf = ctx.createBiquadFilter(); clickBpf.type = 'bandpass'; clickBpf.frequency.value = 3200; clickBpf.Q.value = 0.6;
+  const clickGain = ctx.createGain(); clickGain.gain.value = 0.5;
+  clickSrc.connect(clickBpf); clickBpf.connect(clickGain); clickGain.connect(ctx.destination);
+  clickSrc.start(now); clickSrc.stop(now + 0.007);
+  // Woody resonance body — pitch drops fast like hollow wood
+  const osc = ctx.createOscillator(); osc.type = 'sine';
+  const freq = 260 + Math.random() * 80;
+  osc.frequency.setValueAtTime(freq, now);
+  osc.frequency.exponentialRampToValueAtTime(freq * 0.42, now + 0.055);
+  const bodyGain = ctx.createGain();
+  bodyGain.gain.setValueAtTime(0.26, now);
+  bodyGain.gain.exponentialRampToValueAtTime(0.001, now + 0.065);
+  osc.connect(bodyGain); bodyGain.connect(ctx.destination);
+  osc.start(now); osc.stop(now + 0.065);
+  // Mid-range knock — short bandpass noise (the "knock" of wood)
+  const knockLen = Math.floor(ctx.sampleRate * 0.022);
+  const knockBuf = ctx.createBuffer(1, knockLen, ctx.sampleRate);
+  const kd = knockBuf.getChannelData(0);
+  for (let i = 0; i < knockLen; i++) kd[i] = (Math.random()*2-1) * Math.pow(1 - i/knockLen, 1.4);
+  const knockSrc = ctx.createBufferSource(); knockSrc.buffer = knockBuf;
+  const knockBpf = ctx.createBiquadFilter(); knockBpf.type = 'bandpass'; knockBpf.frequency.value = 750; knockBpf.Q.value = 1.4;
+  const knockGain = ctx.createGain(); knockGain.gain.value = 0.3;
+  knockSrc.connect(knockBpf); knockBpf.connect(knockGain); knockGain.connect(ctx.destination);
+  knockSrc.start(now); knockSrc.stop(now + 0.022);
 }
 
 function playFloor() {
@@ -308,7 +320,7 @@ function initGame() {
   }));
   if (vsAI) players[1].name = 'AI';
   round = 1; currentPlayer = 0; phase = 'draft';
-  selection = null; tilingLog = null; aiThinking = false;
+  pendingSource = null; animating = false; tilingLog = null; aiThinking = false;
   centerHasFirstToken = true; center = [];
   fillFactories();
   render();
@@ -349,8 +361,8 @@ function allEmpty() {
 }
 
 function isValidPatternLine(pIdx, lineIdx) {
-  if (!selection) return false;
-  const {color} = selection;
+  const color = pendingSource ? pendingSource.color : null;
+  if (!color) return false;
   const pl = players[pIdx];
   const line = pl.patternLines[lineIdx];
   if (line.count === lineIdx+1) return false;
@@ -360,62 +372,159 @@ function isValidPatternLine(pIdx, lineIdx) {
   return true;
 }
 
-function applySelection(color, tiles) {
-  selection = {color, tiles};
-  phase = 'place';
-  const hasValid = [0,1,2,3,4].some(i => isValidPatternLine(currentPlayer, i));
-  if (!hasValid) { floorAll(); return; }
+function clickFactory(fIdx, color) {
+  if (phase !== 'draft' || aiThinking || aiAnimStep > 0 || animating) return;
+  if (!factories[fIdx].includes(color)) return;
+  if (pendingSource && pendingSource.type === 'factory' && pendingSource.factoryIdx === fIdx && pendingSource.color === color) {
+    pendingSource = null;
+  } else {
+    pendingSource = {type: 'factory', factoryIdx: fIdx, color};
+  }
   render();
 }
 
-function clickFactory(fIdx, color) {
-  if (phase !== 'draft' || aiThinking || aiAnimStep > 0) return;
-  const factory = factories[fIdx];
-  const taken = factory.filter(t => t === color);
-  if (!taken.length) return;
-  center.push(...factory.filter(t => t !== color));
-  factories[fIdx] = [];
-  applySelection(color, taken);
-}
-
 function clickCenter(color) {
-  if (phase !== 'draft' || aiThinking || aiAnimStep > 0) return;
-  const taken = center.filter(t => t === color);
-  if (!taken.length) return;
-  center = center.filter(t => t !== color);
-  if (centerHasFirstToken) {
-    centerHasFirstToken = false;
-    if (players[currentPlayer].floor.length < 7) players[currentPlayer].floor.push('first');
+  if (phase !== 'draft' || aiThinking || aiAnimStep > 0 || animating) return;
+  if (!center.includes(color)) return;
+  if (pendingSource && pendingSource.type === 'center' && pendingSource.color === color) {
+    pendingSource = null;
+  } else {
+    pendingSource = {type: 'center', color};
   }
-  applySelection(color, taken);
+  render();
 }
 
-function placeTiles(pIdx, lineIdx) {
-  if (phase !== 'place' || pIdx !== currentPlayer) return;
+// ---- Tile fly animation ----
+
+function flyTile(fromRect, toRect, color, delay, onLand) {
+  const size = 22;
+  const el = document.createElement('div');
+  const fx = fromRect.left + (fromRect.width  - size) / 2;
+  const fy = fromRect.top  + (fromRect.height - size) / 2;
+  const tx = toRect.left   + (toRect.width    - size) / 2;
+  const ty = toRect.top    + (toRect.height   - size) / 2;
+  el.style.cssText = `position:fixed;width:${size}px;height:${size}px;left:${fx}px;top:${fy}px;background:${HEX[color]};border-radius:3px;border:1px solid rgba(255,255,255,0.45);z-index:9999;pointer-events:none;box-shadow:0 2px 6px rgba(0,0,0,0.5);`;
+  document.body.appendChild(el);
+  setTimeout(() => {
+    void el.offsetWidth;
+    el.style.transition = 'left 0.54s cubic-bezier(.4,0,.2,1), top 0.54s cubic-bezier(.4,0,.2,1)';
+    el.style.left = tx + 'px';
+    el.style.top  = ty + 'px';
+    // onLand fires BEFORE remove so the destination fills before the clone disappears
+    setTimeout(() => { if (onLand) onLand(); el.remove(); }, 580);
+  }, delay);
+}
+
+function commitToRow(pIdx, lineIdx) {
+  if (!pendingSource || pIdx !== currentPlayer || animating) return;
   if (!isValidPatternLine(pIdx, lineIdx)) return;
-  const pl = players[pIdx];
-  const line = pl.patternLines[lineIdx];
-  const space = (lineIdx+1) - line.count;
-  const toPlace = Math.min(selection.tiles.length, space);
-  const overflow = selection.tiles.length - toPlace;
-  line.color = selection.color;
-  line.count += toPlace;
-  for (let i = 0; i < overflow; i++) {
-    if (pl.floor.length < 7) pl.floor.push(selection.color); else discard.push(selection.color);
+
+  const color = pendingSource.color;
+  const src   = {...pendingSource};
+
+  // Grab rects BEFORE any DOM changes
+  let srcRects = [], remainderRects = [], remainderColors = [];
+  if (src.type === 'factory') {
+    const fEl = document.querySelectorAll('.factory')[src.factoryIdx];
+    if (fEl) fEl.querySelectorAll('.factory-tile').forEach(el => {
+      if (el.classList.contains('selected')) srcRects.push(el.getBoundingClientRect());
+      else { remainderRects.push(el.getBoundingClientRect()); remainderColors.push(el.title); }
+    });
+  } else {
+    document.querySelectorAll('.center-tile').forEach(el => {
+      if (el.classList.contains('selected')) srcRects.push(el.getBoundingClientRect());
+    });
   }
-  selection = null;
-  playClick();
-  if (overflow > 0) setTimeout(playFloor, 90);
-  afterPlace();
+  const boardEls = document.querySelectorAll('.player-board');
+  const rowEl    = boardEls[pIdx] ? boardEls[pIdx].querySelectorAll('.pattern-row')[lineIdx] : null;
+  const poolEl   = document.querySelector('.center-pool');
+  const rowRect  = rowEl  ? rowEl.getBoundingClientRect()  : null;
+  const poolRect = poolEl ? poolEl.getBoundingClientRect() : null;
+
+  // Compute placement counts
+  const pl      = players[pIdx];
+  const line    = pl.patternLines[lineIdx];
+  const space   = (lineIdx + 1) - line.count;
+  const srcTiles      = src.type === 'factory' ? factories[src.factoryIdx].filter(t => t === color) : center.filter(t => t === color);
+  const remainTiles   = src.type === 'factory' ? factories[src.factoryIdx].filter(t => t !== color) : [];
+  const toPlace = Math.min(srcTiles.length, space);
+  const overflow = srcTiles.length - toPlace;
+
+  // Commit source state (not destination yet)
+  pendingSource = null;
+  animating = true;
+  if (src.type === 'factory') {
+    factories[src.factoryIdx] = [];
+    center.push(...remainTiles);
+  } else {
+    center = center.filter(t => t !== color);
+    if (centerHasFirstToken) {
+      centerHasFirstToken = false;
+      if (pl.floor.length < 7) pl.floor.push('first');
+    }
+  }
+
+  render(); // show cleared source; row still unfilled
+
+  const STAGGER = 150;
+  const LAND    = 580;
+  const srcCount = srcRects.length;
+  const remCount = remainTiles.length;
+
+  const fillRow = () => {
+    line.color = color; line.count += toPlace;
+    for (let i = 0; i < overflow; i++) { if (pl.floor.length < 7) pl.floor.push(color); else discard.push(color); }
+    if (overflow > 0) playFloor();
+  };
+  const finish = () => { animating = false; afterPlace(); };
+
+  if (srcCount === 0 && remCount === 0) { playClick(); fillRow(); finish(); return; }
+
+  let srcLanded = 0, remLanded = 0;
+
+  // Fill the row as soon as the last SELECTED tile lands — before remainder tiles are done
+  const onSrcLand = () => {
+    playClick();
+    if (++srcLanded === srcCount) { fillRow(); render(); if (remCount === 0) finish(); }
+  };
+  const onRemLand = () => {
+    playClick();
+    if (++remLanded === remCount) finish();
+  };
+
+  if (srcCount === 0) { fillRow(); render(); } // edge case: no src rects found
+
+  srcRects.forEach((rect, i) => {
+    if (rowRect) flyTile(rect, rowRect, color, i * STAGGER, onSrcLand);
+    else setTimeout(onSrcLand, i * STAGGER + LAND);
+  });
+
+  // Remainder tiles start flying after all src tiles have landed
+  const remStart = srcCount * STAGGER + LAND;
+  remainTiles.forEach((tc, i) => {
+    const rect = remainderRects[i];
+    if (rect && poolRect) flyTile(rect, poolRect, tc, remStart + i * STAGGER, onRemLand);
+    else setTimeout(onRemLand, remStart + i * STAGGER + LAND);
+  });
 }
 
-function floorAll() {
-  if (phase !== 'place') return;
+function commitToFloor() {
+  if (!pendingSource || animating) return;
+  const color = pendingSource.color;
+  const src   = {...pendingSource};
+  pendingSource = null;
   const pl = players[currentPlayer];
-  for (const t of selection.tiles) {
-    if (pl.floor.length < 7) pl.floor.push(t); else discard.push(t);
+  let srcTiles;
+  if (src.type === 'factory') {
+    srcTiles = factories[src.factoryIdx].filter(t => t === color);
+    center.push(...factories[src.factoryIdx].filter(t => t !== color));
+    factories[src.factoryIdx] = [];
+  } else {
+    srcTiles = center.filter(t => t === color);
+    center   = center.filter(t => t !== color);
+    if (centerHasFirstToken) { centerHasFirstToken = false; if (pl.floor.length < 7) pl.floor.push('first'); }
   }
-  selection = null;
+  for (const t of srcTiles) { if (pl.floor.length < 7) pl.floor.push(t); else discard.push(t); }
   playFloor();
   afterPlace();
 }
@@ -500,11 +609,15 @@ function doWallTiling() {
 }
 
 function scoreWallPlacement(pl, row, col) {
+  return scoreWallOnGrid(pl.wall, row, col);
+}
+
+function scoreWallOnGrid(wall, row, col) {
   let h=1, v=1, hasH=false, hasV=false;
-  for (let c=col-1;c>=0;c--) { if (pl.wall[row][c]) {h++;hasH=true;} else break; }
-  for (let c=col+1;c< 5;c++) { if (pl.wall[row][c]) {h++;hasH=true;} else break; }
-  for (let r=row-1;r>=0;r--) { if (pl.wall[r][col]) {v++;hasV=true;} else break; }
-  for (let r=row+1;r< 5;r++) { if (pl.wall[r][col]) {v++;hasV=true;} else break; }
+  for (let c=col-1;c>=0;c--) { if (wall[row][c]) {h++;hasH=true;} else break; }
+  for (let c=col+1;c< 5;c++) { if (wall[row][c]) {h++;hasH=true;} else break; }
+  for (let r=row-1;r>=0;r--) { if (wall[r][col]) {v++;hasV=true;} else break; }
+  for (let r=row+1;r< 5;r++) { if (wall[r][col]) {v++;hasV=true;} else break; }
   if (!hasH && !hasV) return 1;
   return (hasH?h:0)+(hasV?v:0);
 }
@@ -524,7 +637,7 @@ function computeEndGameBonuses(pl) {
 function proceedToNextRound() {
   round++;
   centerHasFirstToken = true; center = [];
-  phase = 'draft'; selection = null; tilingLog = null;
+  phase = 'draft'; pendingSource = null; tilingLog = null;
   fillFactories();
   if (vsAI && currentPlayer === 1) {
     aiThinking = true;
@@ -549,7 +662,10 @@ function dot(color, size=12, radius=3) {
 function renderStatus() {
   const el = document.getElementById('status-bar');
   if (phase==='draft') {
-    if (aiAnimStep === 1 && aiMove) {
+    if (pendingSource && !animating) {
+      el.textContent = `${players[currentPlayer].name} — click a highlighted row, or tap selected tiles to deselect`;
+      el.style.color = '#e2b96f';
+    } else if (aiAnimStep === 1 && aiMove) {
       const src = aiMove.source === 'factory' ? `factory ${aiMove.factoryIdx+1}` : 'center';
       el.innerHTML = `Round ${round}  ·  AI takes ${aiMove.count}× ${dot(aiMove.color,12,2)} from ${src}`;
       el.style.color = '#aaa';
@@ -565,9 +681,6 @@ function renderStatus() {
       el.textContent = `Round ${round}  ·  ${players[currentPlayer].name}'s turn — pick tiles from a factory or center`;
       el.style.color = '#eee';
     }
-  } else if (phase==='place') {
-    el.textContent = `${players[currentPlayer].name} — click a highlighted row to place tiles`;
-    el.style.color = '#e2b96f';
   } else if (phase==='tiling-preview') {
     el.textContent = `Round ${round} complete — gold rows will score, red floor tiles will penalize`;
     el.style.color = '#e2b96f';
@@ -585,8 +698,11 @@ function renderStatus() {
 
 function renderSelectedInfo() {
   const el = document.getElementById('selected-info');
-  if (!selection) { el.innerHTML=''; return; }
-  el.innerHTML = `${dot(selection.color,14,3)} ${selection.tiles.length}× ${selection.color} selected — click a highlighted pattern row`;
+  if (!pendingSource) { el.innerHTML=''; return; }
+  const count = pendingSource.type === 'factory'
+    ? factories[pendingSource.factoryIdx].filter(t => t === pendingSource.color).length
+    : center.filter(t => t === pendingSource.color).length;
+  el.innerHTML = `${dot(pendingSource.color,14,3)} ${count}× ${pendingSource.color} selected — click a highlighted row or FLOOR ALL`;
 }
 
 function renderTilingResults() {
@@ -611,9 +727,9 @@ function renderTilingResults() {
 function renderActions() {
   const el = document.getElementById('actions');
   el.innerHTML='';
-  if (phase==='place') {
+  if (phase==='draft' && pendingSource && !animating) {
     const b=document.createElement('button');
-    b.className='btn danger'; b.textContent='FLOOR ALL'; b.onclick=floorAll;
+    b.className='btn danger'; b.textContent='FLOOR ALL'; b.onclick=commitToFloor;
     el.appendChild(b);
   }
   if (phase==='tiling-preview') {
@@ -650,7 +766,9 @@ function renderMarket() {
         cell.style.background=HEX[tiles[i]]; cell.title=tiles[i];
         if (aiAnimStep===1 && aiMove && aiMove.source==='factory' && aiMove.factoryIdx===fIdx && tiles[i]===aiMove.color)
           cell.classList.add('ai-highlight');
-        if (phase==='draft') cell.onclick=()=>clickFactory(fIdx,tiles[i]);
+        if (pendingSource && pendingSource.type==='factory' && pendingSource.factoryIdx===fIdx && tiles[i]===pendingSource.color)
+          cell.classList.add('selected');
+        if (phase==='draft' && !animating) cell.onclick=()=>clickFactory(fIdx,tiles[i]);
       }
       circle.appendChild(cell);
     }
@@ -673,7 +791,9 @@ function renderMarket() {
       tile.className='center-tile'; tile.style.background=HEX[color]; tile.title=color;
       if (aiAnimStep===1 && aiMove && aiMove.source==='center' && color===aiMove.color)
         tile.classList.add('ai-highlight');
-      if (phase==='draft') tile.onclick=()=>clickCenter(color);
+      if (pendingSource && pendingSource.type==='center' && color===pendingSource.color)
+        tile.classList.add('selected');
+      if (phase==='draft' && !animating) tile.onclick=()=>clickCenter(color);
       pool.appendChild(tile);
     });
   });
@@ -689,7 +809,7 @@ function renderBoards() {
   const el=document.getElementById('boards'); el.innerHTML='';
   players.forEach((pl, pIdx) => {
     const board=document.createElement('div');
-    const isActive=(phase==='draft'||phase==='place')&&pIdx===currentPlayer;
+    const isActive=phase==='draft'&&pIdx===currentPlayer;
     board.className='player-board'+(isActive?' active-player':'');
 
     const header=document.createElement('div'); header.className='player-header';
@@ -704,10 +824,10 @@ function renderBoards() {
     for (let lineIdx=0;lineIdx<5;lineIdx++) {
       const line=pl.patternLines[lineIdx];
       const rowEl=document.createElement('div'); rowEl.className='pattern-row';
-      const isValid=phase==='place'&&pIdx===currentPlayer&&isValidPatternLine(pIdx,lineIdx);
+      const isValid=phase==='draft'&&pendingSource&&!animating&&pIdx===currentPlayer&&isValidPatternLine(pIdx,lineIdx);
       if (isValid) {
         rowEl.classList.add('valid-target');
-        rowEl.onclick=()=>placeTiles(pIdx,lineIdx);
+        rowEl.onclick=()=>commitToRow(pIdx,lineIdx);
         rowEl.title=`Row ${lineIdx+1} (${lineIdx+1-line.count} space${lineIdx-line.count?'s':''} left)`;
       }
       if (aiAnimStep===2 && aiMove && pIdx===1 && lineIdx===aiMove.lineIdx)
@@ -737,8 +857,24 @@ function renderBoards() {
         cell.title=WALL_PATTERN[r][c]+(pl.wall[r][c]?' ✓':'');
         if (phase==='tiling-preview') {
           const pLine=pl.patternLines[r];
-          if (pLine.count===r+1 && pLine.color && WALL_PATTERN[r].indexOf(pLine.color)===c && !pl.wall[r][c])
+          if (pLine.count===r+1 && pLine.color && WALL_PATTERN[r].indexOf(pLine.color)===c && !pl.wall[r][c]) {
             cell.classList.add('will-place');
+            // Simulate all earlier-row placements for this player in this round
+            // so the score reflects adjacency with tiles placed before this one
+            const tempWall = pl.wall.map(row => [...row]);
+            for (let prevRow = 0; prevRow < r; prevRow++) {
+              const prevLine = pl.patternLines[prevRow];
+              if (prevLine.count === prevRow+1 && prevLine.color) {
+                tempWall[prevRow][WALL_PATTERN[prevRow].indexOf(prevLine.color)] = true;
+              }
+            }
+            const pts = scoreWallOnGrid(tempWall, r, c);
+            cell.style.display='flex'; cell.style.alignItems='center'; cell.style.justifyContent='center';
+            const lbl=document.createElement('span');
+            lbl.textContent=pts;
+            lbl.style.cssText='font-size:0.62rem;font-weight:900;color:rgba(255,255,255,0.95);text-shadow:0 1px 3px rgba(0,0,0,0.8);pointer-events:none;line-height:1;';
+            cell.appendChild(lbl);
+          }
         }
         if (phase==='tiling' && justPlaced.some(jp=>jp.pIdx===pIdx&&jp.row===r&&jp.col===c))
           cell.classList.add('just-placed');
@@ -828,29 +964,103 @@ function executeAIMove(move) {
   afterPlace();
 }
 
+// Collect all available pick candidates from current supply
+function gatherCandidates(facs, ctr) {
+  const out = [];
+  facs.forEach((tiles, fIdx) => {
+    if (!tiles.length) return;
+    [...new Set(tiles)].forEach(color => {
+      out.push({color, count: tiles.filter(t => t === color).length, source:'factory', factoryIdx:fIdx});
+    });
+  });
+  [...new Set(ctr)].forEach(color => {
+    out.push({color, count: ctr.filter(t => t === color).length, source:'center'});
+  });
+  return out;
+}
+
+// Build a temporary wall with all same-round completions (other than excludeRow) already placed.
+// This gives accurate adjacency scores when the AI is completing multiple rows in one scoring phase.
+function buildRoundWall(player, excludeRow) {
+  const wall = player.wall.map(r => [...r]);
+  for (let r = 0; r < 5; r++) {
+    if (r === excludeRow) continue;
+    const line = player.patternLines[r];
+    if (line.count === r+1 && line.color) wall[r][WALL_PATTERN[r].indexOf(line.color)] = true;
+  }
+  return wall;
+}
+
+// Bonus for placing at (wallRow, wallCol) when the AI has in-progress (but not yet completing)
+// pattern lines that will eventually land in an adjacent wall cell above or below.
+function aiFutureAdjBonus(player, wallRow, wallCol) {
+  let bonus = 0;
+  for (const ar of [wallRow-1, wallRow+1]) {
+    if (ar < 0 || ar > 4 || player.wall[ar][wallCol]) continue;
+    const line = player.patternLines[ar];
+    // Only in-progress lines (completing lines are handled by buildRoundWall)
+    if (line.color === WALL_PATTERN[ar][wallCol] && line.count > 0 && line.count < ar+1) {
+      bonus += (line.count / (ar+1)) * 1.6;
+    }
+  }
+  return bonus;
+}
+
+// Simulate the candidate move, then find the best AI follow-up from remaining tiles.
+// The human's response is not modelled — this is a "what becomes available to me" estimate.
+function aiLookAhead(ai, cand, lineIdx) {
+  // Simulate supply after this pick
+  const simFact = factories.map(f => [...f]);
+  let simCenter = [...center];
+  if (cand.source === 'factory') {
+    simCenter.push(...simFact[cand.factoryIdx].filter(t => t !== cand.color));
+    simFact[cand.factoryIdx] = [];
+  } else {
+    simCenter = simCenter.filter(t => t !== cand.color);
+  }
+
+  // Simulate AI's updated board
+  const simAi = {
+    wall:         ai.wall.map(r => [...r]),
+    patternLines: ai.patternLines.map(l => ({...l})),
+    floor:        [...ai.floor]
+  };
+  const sLine  = simAi.patternLines[lineIdx];
+  const placed = Math.min(cand.count, (lineIdx+1) - sLine.count);
+  sLine.color  = cand.color;
+  sLine.count += placed;
+  // If the line completes, tile it immediately so the wall reflects it
+  if (sLine.count === lineIdx+1) {
+    simAi.wall[lineIdx][WALL_PATTERN[lineIdx].indexOf(cand.color)] = true;
+    sLine.color = null; sLine.count = 0;
+  }
+
+  // Find the best AI move reachable from the remaining supply
+  let best = 0;
+  for (const rc of gatherCandidates(simFact, simCenter)) {
+    for (let li = 0; li < 5; li++) {
+      if (!aiLineValid(simAi, li, rc.color)) continue;
+      const s = aiEvalPlace(simAi, players[0], rc.color, rc.count, li, rc.source === 'center');
+      if (s > best) best = s;
+    }
+  }
+  return best;
+}
+
 function findBestMove() {
   const ai = players[1], human = players[0];
   let bestScore = -Infinity, bestMove = null;
-  const candidates = [];
-  factories.forEach((tiles, fIdx) => {
-    if (!tiles.length) return;
-    [...new Set(tiles)].forEach(color => {
-      candidates.push({color, count: tiles.filter(t=>t===color).length, source:'factory', factoryIdx:fIdx});
-    });
-  });
-  [...new Set(center)].forEach(color => {
-    candidates.push({color, count: center.filter(t=>t===color).length, source:'center'});
-  });
 
-  for (const cand of candidates) {
+  for (const cand of gatherCandidates(factories, center)) {
     let hasValid = false;
     for (let li = 0; li < 5; li++) {
       if (!aiLineValid(ai, li, cand.color)) continue;
       hasValid = true;
-      const s = aiEvalPlace(ai, human, cand.color, cand.count, li, cand.source==='center');
+      const s = aiEvalPlace(ai, human, cand.color, cand.count, li, cand.source === 'center')
+              + aiLookAhead(ai, cand, li) * 0.28;
       if (s > bestScore) { bestScore = s; bestMove = {...cand, lineIdx: li}; }
     }
-    const fs = aiEvalFloor(ai, cand.color, cand.count, cand.source==='center')
+    const fs = aiEvalFloor(ai, cand.color, cand.count, cand.source === 'center')
              + aiEvalBlock(human, cand.color, cand.count) * 0.5
              - (hasValid ? 8 : 0);
     if (fs > bestScore) { bestScore = fs; bestMove = {...cand, lineIdx: -1}; }
@@ -868,25 +1078,31 @@ function aiLineValid(player, lineIdx, color) {
 
 function aiEvalPlace(ai, human, color, count, lineIdx, fromCenter) {
   let score = 0;
-  const line = ai.patternLines[lineIdx];
+  const line     = ai.patternLines[lineIdx];
   const capacity = lineIdx + 1;
-  const space = capacity - line.count;
-  const placed = Math.min(count, space);
+  const space    = capacity - line.count;
+  const placed   = Math.min(count, space);
   const overflow = count - placed;
   const newCount = line.count + placed;
-  const wallCol = WALL_PATTERN[lineIdx].indexOf(color);
+  const wallCol  = WALL_PATTERN[lineIdx].indexOf(color);
 
-  // Floor from first token then overflow
   let fp = ai.floor.length;
   if (fromCenter && centerHasFirstToken) { if (fp < 7) score += FLOOR_PENALTIES[fp]; fp++; }
   for (let i = 0; i < overflow; i++) { if (fp < 7) score += FLOOR_PENALTIES[fp++]; }
 
+  // Use a round-aware wall so that same-round co-placements count for adjacency
+  const rw = buildRoundWall(ai, lineIdx);
+
   if (newCount === capacity) {
-    score += aiWallScore(ai, lineIdx, wallCol) + aiEndBonus(ai, lineIdx, wallCol);
+    score += scoreWallOnGrid(rw, lineIdx, wallCol);
+    score += aiEndBonus(ai, lineIdx, wallCol);
+    score += aiFutureAdjBonus(ai, lineIdx, wallCol);
   } else {
-    const potential = aiWallScore(ai, lineIdx, wallCol) + aiEndBonus(ai, lineIdx, wallCol);
+    const potential = scoreWallOnGrid(rw, lineIdx, wallCol) + aiEndBonus(ai, lineIdx, wallCol);
     score += (newCount / capacity) * potential * 0.35;
     if (newCount === capacity - 1) score += 0.5;
+    // Partial credit for building toward a cell adjacent to existing progress
+    score += aiFutureAdjBonus(ai, lineIdx, wallCol) * (newCount / capacity) * 0.3;
   }
   score += aiEvalBlock(human, color, count) * 0.5;
   return score;
@@ -899,20 +1115,10 @@ function aiEvalFloor(ai, color, count, fromCenter) {
   return score;
 }
 
-function aiWallScore(player, row, col) {
-  let h=1,v=1,hasH=false,hasV=false;
-  for(let c=col-1;c>=0;c--){if(player.wall[row][c]){h++;hasH=true;}else break;}
-  for(let c=col+1;c<5;c++) {if(player.wall[row][c]){h++;hasH=true;}else break;}
-  for(let r=row-1;r>=0;r--){if(player.wall[r][col]){v++;hasV=true;}else break;}
-  for(let r=row+1;r<5;r++) {if(player.wall[r][col]){v++;hasV=true;}else break;}
-  if(!hasH&&!hasV) return 1;
-  return (hasH?h:0)+(hasV?v:0);
-}
-
 function aiEndBonus(player, row, col) {
   let b = 0;
   if (player.wall[row].filter(Boolean).length === 4) b += 2 * 0.8;
-  if (player.wall.filter(r=>r[col]).length === 4) b += 7 * 0.7;
+  if (player.wall.filter(r => r[col]).length === 4) b += 7 * 0.7;
   const color = WALL_PATTERN[row][col];
   let n = 0;
   for (let r=0;r<5;r++) { const c=WALL_PATTERN[r].indexOf(color); if (player.wall[r][c]) n++; }
