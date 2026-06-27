@@ -45,73 +45,61 @@ h1 {
   margin-bottom:6px; font-family:'Segoe UI',sans-serif; color:#a0b890;
 }
 .scoring-banner {
-  text-align:center; background:rgba(10,30,15,0.85); border:2px solid #c8860a;
+  text-align:center; background:rgba(10,30,15,0.9); border:2px solid #c8860a;
   border-radius:10px; padding:10px 24px; margin-bottom:6px; display:none;
   font-size:0.82rem; font-family:'Segoe UI',sans-serif;
   box-shadow:0 0 20px rgba(200,134,10,0.3);
 }
 .scoring-banner h3 { color:#f0c060; font-size:0.75rem; letter-spacing:2px; margin-bottom:4px; }
 .board-wrap {
-  border-radius:14px; border:3px solid #1a4a2a;
-  margin-bottom:10px; overflow:hidden;
-  box-shadow:0 8px 32px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,255,255,0.04);
+  border-radius:12px; border:3px solid #1a4a2a; margin-bottom:10px; overflow:hidden;
+  box-shadow:0 8px 40px rgba(0,0,0,0.6);
 }
+/* Market + deck row */
 .market-row { display:flex; align-items:flex-end; gap:10px; margin-bottom:10px; flex-wrap:wrap; justify-content:center; }
 .mlabel { font-size:0.62rem; color:#4a6a50; letter-spacing:2px; font-family:'Segoe UI',sans-serif; align-self:center; }
 .deck-btn {
   width:52px; height:52px; border-radius:8px;
   background:linear-gradient(160deg,#0c1a10,#081408);
-  border:2px solid #2a4a30; cursor:pointer;
+  border:2px solid #2a4a30; cursor:pointer; align-self:center;
   display:flex; align-items:center; justify-content:center;
-  font-size:0.7rem; color:#4a7a50; transition:all 0.12s; font-weight:bold;
-  font-family:'Segoe UI',sans-serif; align-self:center;
+  font-size:0.7rem; color:#4a7a50; transition:all 0.12s; font-weight:bold; font-family:'Segoe UI',sans-serif;
 }
 .deck-btn:hover { border-color:#f0c060; color:#f0c060; }
-.deck-btn.active-draw { border-color:#f0c060; box-shadow:0 0 10px rgba(240,192,96,0.4); color:#f0c060; }
+.deck-btn.draw-active { border-color:#f0c060; box-shadow:0 0 12px rgba(240,192,96,0.45); color:#f0c060; }
 .deck-btn.empty { cursor:default; opacity:0.25; }
+/* Portrait cards (hand + market) */
 .hands-wrap { width:100%; max-width:760px; }
 .player-area { margin-bottom:10px; }
 .player-label { font-size:0.62rem; letter-spacing:2px; margin-bottom:5px; font-family:'Segoe UI',sans-serif; }
 .hand { display:flex; gap:7px; flex-wrap:wrap; min-height:100px; }
-/* Portrait card with mini-map */
 .card {
   width:72px; height:100px; border-radius:8px;
   background:linear-gradient(175deg,#1c110a,#0e1c0a);
   border:2px solid #5a3e1a; display:flex; flex-direction:column;
   align-items:stretch; cursor:pointer; user-select:none;
   transition:all 0.12s; overflow:hidden;
-  box-shadow:2px 3px 8px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,220,120,0.07);
+  box-shadow:2px 3px 10px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,220,120,0.07);
 }
-.card:hover { border-color:#f0c060; transform:translateY(-5px); box-shadow:2px 8px 18px rgba(0,0,0,0.5); }
+.card:hover { border-color:#f0c060; transform:translateY(-5px); box-shadow:2px 8px 20px rgba(0,0,0,0.55); }
 .card.sel {
   border-color:#f0c060;
-  box-shadow:0 0 0 2px #f0c060, 0 0 18px rgba(240,192,96,0.55), 2px 10px 20px rgba(0,0,0,0.5);
+  box-shadow:0 0 0 2px #f0c060, 0 0 20px rgba(240,192,96,0.55), 2px 10px 22px rgba(0,0,0,0.55);
   transform:translateY(-8px);
 }
+.card.draw-active { border-color:#f0c060; box-shadow:0 0 0 2px #f0c060, 0 0 12px rgba(240,192,96,0.4); }
+.card.draw-active:hover { transform:translateY(-5px); }
 .card.facedown { cursor:default; border-color:#1a2a1a; }
-.card.facedown:hover { transform:none; box-shadow:2px 3px 8px rgba(0,0,0,0.5); }
+.card.facedown:hover { transform:none; box-shadow:2px 3px 10px rgba(0,0,0,0.55); }
 .card-map { flex:1; display:block; }
 .card-name {
   text-align:center; font-size:0.55rem; font-weight:900; letter-spacing:1px;
   font-family:'Segoe UI',sans-serif; color:#a07840;
-  padding:3px 2px 4px; border-top:1px solid #3a2810;
-  background:rgba(0,0,0,0.25);
+  padding:3px 2px 4px; border-top:1px solid #3a2810; background:rgba(0,0,0,0.28);
 }
 .card.sel .card-name { color:#f0c060; }
-/* Market cards same style as hand cards */
-.mcard {
-  width:72px; height:100px; border-radius:8px;
-  background:linear-gradient(175deg,#1c110a,#0e1c0a);
-  border:2px solid #5a3e1a; display:flex; flex-direction:column;
-  align-items:stretch; cursor:pointer; user-select:none;
-  transition:all 0.12s; overflow:hidden;
-  box-shadow:2px 3px 8px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,220,120,0.07);
-}
-.mcard:hover { border-color:#f0c060; transform:translateY(-4px); }
-.mcard.active-draw { border-color:#f0c060; box-shadow:0 0 12px rgba(240,192,96,0.5); }
-.mcard.empty-slot { cursor:default; opacity:0.18; }
-.mcard.empty-slot:hover { transform:none; }
-.actions { display:flex; gap:8px; justify-content:center; margin-bottom:8px; flex-wrap:wrap; min-height:36px; }
+.card.draw-active .card-name { color:#f0c060; }
+.actions { display:flex; gap:8px; justify-content:center; margin-bottom:8px; flex-wrap:wrap; min-height:32px; }
 .legend { margin-top:6px; font-size:0.63rem; color:#2a4a30; text-align:center; line-height:2; max-width:660px; font-family:'Segoe UI',sans-serif; }
 .legend span { color:#3a6a40; }
 </style>
@@ -132,15 +120,15 @@ h1 {
 <div class="status-bar" id="status-bar"></div>
 <div class="scoring-banner" id="scoring-banner"></div>
 <div class="board-wrap">
-  <svg id="board" width="660" height="500" viewBox="0 0 660 500" style="display:block"></svg>
+  <svg id="board" width="570" height="500" viewBox="5 100 458 402" style="display:block"></svg>
 </div>
 <div class="market-row" id="market-row"></div>
 <div class="hands-wrap" id="hands-wrap"></div>
 <div class="actions" id="actions"></div>
 <div class="legend">
-  <span>Select a card</span> to highlight valid connections · <span>Click a connection</span> to place a bridge ·
-  <span>Select 2 cards</span> naming both ends of an opponent's bridge to remove it<br>
-  Control an island by owning more than half its bridges — opponent's bridges are removed · Three scoring phases: 1pt · 2pt · island difference
+  <span>Select a card</span> then click a glowing route to place a bridge ·
+  <span>Select 2 cards</span> naming both ends of an enemy bridge to remove it ·
+  <span>Draw a card</span> from the market or deck to end your turn
 </div>
 <script>
 // ---- Constants ----
@@ -160,81 +148,28 @@ const CONNS = [
   [10,11],
 ];
 
+// Island positions calibrated to kahuna-board.jpg (647×613px, board area ≈ x:5-462 y:100-502)
 const POS = [
-  {x:330,y:52},   // 0 LALE
-  {x:208,y:132},  // 1 IFFI
-  {x:480,y:130},  // 2 HUNA
-  {x:68,y:192},   // 3 KAHU
-  {x:178,y:252},  // 4 JOJO
-  {x:106,y:345},  // 5 GOLA
-  {x:214,y:392},  // 6 FAAA
-  {x:96,y:452},   // 7 COCO
-  {x:300,y:448},  // 8 BARI
-  {x:332,y:318},  // 9 ELAI
-  {x:454,y:308},  // 10 DUDA
-  {x:524,y:430},  // 11 ALOA
+  {x:238,y:138},  // 0  LALE
+  {x:178,y:214},  // 1  IFFI
+  {x:338,y:208},  // 2  HUNA
+  {x:80, y:248},  // 3  KAHU
+  {x:152,y:262},  // 4  JOJO
+  {x:86, y:322},  // 5  GOLA
+  {x:148,y:370},  // 6  FAAA
+  {x:58, y:402},  // 7  COCO
+  {x:220,y:402},  // 8  BARI
+  {x:264,y:338},  // 9  ELAI
+  {x:338,y:326},  // 10 DUDA
+  {x:402,y:418},  // 11 ALOA
 ];
 
 const DEG = new Array(12).fill(0);
 CONNS.forEach(([a,b])=>{ DEG[a]++; DEG[b]++; });
 const MAJ = DEG.map(d => Math.floor(d/2)+1);
 
-// Unique organic island shapes (SVG paths centered at origin, scaled for the 660×500 board)
-const SHAPES = [
-  // 0 LALE — large, main island, prominent irregular oval
-  'M-38,-8 C-30,-22 -4,-28 22,-20 C42,-12 48,-2 42,12 C36,24 12,28 -12,24 C-32,20 -46,8 -40,-4 Z',
-  // 1 IFFI — medium, pear-shaped wider at base
-  'M-14,-17 C-2,-25 16,-20 20,-6 C24,8 14,20 -2,20 C-14,20 -22,10 -20,-4 Z',
-  // 2 HUNA — elongated east-west (like a stretched atoll)
-  'M-36,-5 C-24,-17 6,-20 28,-13 C44,-6 44,6 28,13 C10,20 -14,18 -30,8 C-42,0 -44,-2 -36,-5 Z',
-  // 3 KAHU — tiny, simple
-  'M-11,-6 C-4,-13 8,-11 12,-3 C14,5 8,12 -2,12 C-10,10 -14,2 -11,-6 Z',
-  // 4 JOJO — medium, roundish but irregular left coast
-  'M-22,-13 C-8,-23 14,-19 22,-6 C28,6 20,18 4,20 C-10,22 -24,12 -26,-2 Z',
-  // 5 GOLA — tall narrow elongated N-S
-  'M-10,-22 C0,-30 12,-24 14,-10 C16,4 8,20 -2,24 C-10,24 -16,14 -16,0 C-16,-14 -10,-22 -10,-22 Z',
-  // 6 FAAA — medium, slightly wedge-shaped
-  'M-24,-10 C-10,-22 12,-18 22,-6 C28,4 24,16 8,20 C-8,22 -26,12 -26,-2 Z',
-  // 7 COCO — tiny, roundish
-  'M-9,-5 C-3,-11 7,-9 10,-2 C12,6 6,12 -2,11 C-9,9 -12,1 -9,-5 Z',
-  // 8 BARI — medium, squat, wider than tall
-  'M-24,-8 C-12,-18 12,-16 20,-5 C28,5 22,15 4,18 C-10,20 -24,10 -24,-2 Z',
-  // 9 ELAI — smaller, elongated like a thin crescent
-  'M-19,-6 C-10,-16 8,-14 16,-5 C22,3 18,13 4,15 C-8,16 -20,6 -20,-3 Z',
-  // 10 DUDA — medium, roughly diamond shaped
-  'M-2,-20 C8,-22 18,-12 18,-2 C18,10 10,20 -2,20 C-14,20 -20,10 -18,-2 C-16,-14 -8,-20 -2,-20 Z',
-  // 11 ALOA — medium with a small southern peninsula
-  'M-16,-12 C-2,-22 14,-18 18,-4 C20,8 12,16 0,20 L-2,28 C-10,26 -12,18 -6,14 C-16,10 -24,0 -22,-6 Z',
-];
-
-// Mini-map SVG for a card, highlighting one island
-function cardMiniMap(hl, isSel){
-  // viewBox spans the island region with a little padding
-  const VX=10, VY=30, VW=660, VH=460;
-  const ocean = isSel ? '#1a3a14' : '#08283a';
-  let s=`<svg class="card-map" viewBox="${VX} ${VY} ${VW} ${VH}" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">`;
-  s+=`<rect x="${VX}" y="${VY}" width="${VW}" height="${VH}" fill="${ocean}"/>`;
-  // Connections
-  CONNS.forEach(([a,b])=>{
-    s+=`<line x1="${POS[a].x}" y1="${POS[a].y}" x2="${POS[b].x}" y2="${POS[b].y}" stroke="rgba(180,200,160,0.18)" stroke-width="9"/>`;
-  });
-  // Non-highlighted islands
-  for(let i=0;i<12;i++){
-    if(i===hl) continue;
-    s+=`<path d="${SHAPES[i]}" transform="translate(${POS[i].x},${POS[i].y})" fill="#2a5030" stroke="#3a7040" stroke-width="5"/>`;
-  }
-  // Highlighted island — prominent gold
-  const hlGlow = isSel ? '#f0c060' : '#c89030';
-  s+=`<ellipse cx="${POS[hl].x}" cy="${POS[hl].y}" rx="52" ry="36" fill="none" stroke="${hlGlow}" stroke-width="10" opacity="0.35"/>`;
-  s+=`<path d="${SHAPES[hl]}" transform="translate(${POS[hl].x},${POS[hl].y}) scale(1.15)" fill="${isSel?'#c89030':'#8a6020'}" stroke="${hlGlow}" stroke-width="8"/>`;
-  s+=`</svg>`;
-  return s;
-}
-
-// Player colours: coral-orange / tropical-teal
-const PC = ['#f97316','#22d3ee'];
-const PC_GLOW = ['rgba(249,115,22,0.35)','rgba(34,211,238,0.35)'];
-const PC_FILL = ['rgba(120,40,5,0.7)','rgba(5,60,80,0.7)'];
+const PC      = ['#f97316','#22d3ee'];
+const PC_GLOW = ['rgba(249,115,22,0.4)','rgba(34,211,238,0.4)'];
 
 // ---- Audio ----
 let audioCtx=null, soundOn=true;
@@ -294,8 +229,8 @@ function sndScore(){
 
 // ---- State ----
 let deck,market,hands,bridges,controlled,scores,
-    curP,subphase,scoringRound,totalDraws,
-    selCards,vsAI,aiThinking,pnames,scored;
+    curP,subphase,totalDraws,selCards,vsAI,aiThinking,pnames,scored;
+// subphase: 'play' | 'over'
 
 function setMode(v){
   vsAI = v!=='2p';
@@ -313,11 +248,10 @@ function initGame(){
   market=deck.splice(0,3);
   bridges=new Array(CONNS.length).fill(null);
   controlled=new Array(12).fill(null);
-  scores=[0,0];
-  curP=0; subphase='play'; scoringRound=0; totalDraws=0;
+  scores=[0,0]; curP=0; subphase='play'; totalDraws=0;
   selCards=[]; aiThinking=false; scored=[false,false,false];
   render();
-  if(vsAI && curP===1) scheduleAI();
+  if(vsAI&&curP===1) scheduleAI();
 }
 
 function shuffle(a){
@@ -329,10 +263,9 @@ function shuffle(a){
 
 // ---- Game Logic ----
 
-function placebridge(handIdx, ci){
+function placebridge(handIdx,ci){
   const isl=hands[curP][handIdx];
-  if(!CONNS[ci].includes(isl)) return false;
-  if(bridges[ci]!==null) return false;
+  if(!CONNS[ci].includes(isl)||bridges[ci]!==null) return false;
   hands[curP].splice(handIdx,1);
   bridges[ci]=curP;
   selCards=[];
@@ -344,10 +277,10 @@ function placebridge(handIdx, ci){
 
 function removeBridge(h1,h2,ci){
   const [a,b]=CONNS[ci];
-  const i1=hands[curP][h1], i2=hands[curP][h2];
+  const i1=hands[curP][h1],i2=hands[curP][h2];
   if(!((i1===a&&i2===b)||(i1===b&&i2===a))) return false;
   if(bridges[ci]!==1-curP) return false;
-  const hi=Math.max(h1,h2), lo=Math.min(h1,h2);
+  const hi=Math.max(h1,h2),lo=Math.min(h1,h2);
   hands[curP].splice(hi,1); hands[curP].splice(lo,1);
   bridges[ci]=null;
   selCards=[];
@@ -365,21 +298,16 @@ function resolveAll(){
       const cnt=[0,0];
       CONNS.forEach(([a,b],ci)=>{
         if(a!==isl&&b!==isl) return;
-        if(bridges[ci]===0) cnt[0]++;
-        else if(bridges[ci]===1) cnt[1]++;
+        if(bridges[ci]===0) cnt[0]++; else if(bridges[ci]===1) cnt[1]++;
       });
       const prev=controlled[isl];
       let next=null;
-      if(cnt[0]>=MAJ[isl]) next=0;
-      else if(cnt[1]>=MAJ[isl]) next=1;
+      if(cnt[0]>=MAJ[isl]) next=0; else if(cnt[1]>=MAJ[isl]) next=1;
       if(next!==prev){
-        controlled[isl]=next;
-        changed=true;
+        controlled[isl]=next; changed=true;
         if(next!==null){
           const loser=1-next;
-          CONNS.forEach(([a,b],ci)=>{
-            if((a===isl||b===isl)&&bridges[ci]===loser) bridges[ci]=null;
-          });
+          CONNS.forEach(([a,b],ci)=>{ if((a===isl||b===isl)&&bridges[ci]===loser) bridges[ci]=null; });
           sndCapture();
         }
       }
@@ -388,41 +316,28 @@ function resolveAll(){
 }
 
 // ---- Turn Flow ----
+// Drawing a card ends the turn. No explicit "Finish Turn" button.
 
-function endPlayPhase(){
-  selCards=[];
-  // Draw one card after playing, unless hand is full or nothing left
-  if(hands[curP].length<5 && (deck.length>0||market.length>0)){
-    subphase='draw';
-    render();
-  } else {
-    doEndTurn();
-  }
-}
-
-function drawCard(src){
-  if(subphase!=='draw') return;
-  if(src==='skip'){ doEndTurn(); return; }
+function drawAndEnd(src){
+  if(subphase!=='play') return;
+  let drew=false;
   if(src==='deck'){
-    if(!deck.length){ doEndTurn(); return; }
-    hands[curP].push(deck.shift());
+    if(deck.length&&hands[curP].length<5){ hands[curP].push(deck.shift()); drew=true; }
   } else {
-    if(market[src]===undefined){ return; }
-    hands[curP].push(market[src]);
-    market.splice(src,1);
-    if(deck.length) market.push(deck.shift());
+    if(market[src]!==undefined&&hands[curP].length<5){
+      hands[curP].push(market[src]);
+      market.splice(src,1);
+      if(deck.length) market.push(deck.shift());
+      drew=true;
+    }
   }
-  totalDraws++;
-  checkScoring();
+  if(drew){ totalDraws++; checkScoring(); }
   doEndTurn();
 }
 
 function checkScoring(){
-  [5,10,15].forEach((th,phase)=>{
-    if(!scored[phase] && totalDraws>=th){
-      scored[phase]=true;
-      doScoring(phase+1);
-    }
+  [5,10,15].forEach((th,ph)=>{
+    if(!scored[ph]&&totalDraws>=th){ scored[ph]=true; doScoring(ph+1); }
   });
 }
 
@@ -430,18 +345,15 @@ function doScoring(phase){
   const ic=[0,0];
   controlled.forEach(c=>{ if(c===0)ic[0]++; else if(c===1)ic[1]++; });
   let pts=0,winner=-1;
-  if(phase===1) pts=1;
-  else if(phase===2) pts=2;
-  else pts=Math.abs(ic[0]-ic[1]);
-  if(ic[0]>ic[1]) winner=0;
-  else if(ic[1]>ic[0]) winner=1;
+  if(phase===1) pts=1; else if(phase===2) pts=2; else pts=Math.abs(ic[0]-ic[1]);
+  if(ic[0]>ic[1]) winner=0; else if(ic[1]>ic[0]) winner=1;
   if(winner>=0) scores[winner]+=(phase<3?pts:(ic[winner]-ic[1-winner]));
   sndScore();
   const banner=document.getElementById('scoring-banner');
   const label=['FIRST SCORING  ·  1 POINT','SECOND SCORING  ·  2 POINTS','FINAL SCORING'][phase-1];
-  const res = winner>=0
-    ? `${pnames[winner]} leads ${ic[winner]}–${ic[1-winner]} islands → +${phase<3?pts:Math.abs(ic[0]-ic[1])} pt${pts!==1?'s':''}`
-    : `Tied ${ic[0]}–${ic[1]} islands — no points awarded`;
+  const res=winner>=0
+    ?`${pnames[winner]} leads ${ic[winner]}–${ic[1-winner]} islands → +${phase<3?pts:Math.abs(ic[0]-ic[1])} pt${pts!==1?'s':''}`
+    :`Tied ${ic[0]}–${ic[1]} islands — no points`;
   banner.innerHTML=`<h3>${label}</h3>${res}`;
   banner.style.display='block';
   setTimeout(()=>banner.style.display='none',3500);
@@ -451,35 +363,29 @@ function doEndTurn(){
   selCards=[];
   if(isGameOver()){
     subphase='over';
-    [1,2,3].forEach((ph,i)=>{ if(!scored[i]){ scored[i]=true; doScoring(ph); } });
+    [1,2,3].forEach((ph,i)=>{ if(!scored[i]){ scored[i]=true; doScoring(ph+1); } });
     render(); return;
   }
-  curP=1-curP;
-  subphase='play';
+  curP=1-curP; subphase='play';
   render();
   if(vsAI&&curP===1) scheduleAI();
 }
 
 function isGameOver(){
-  return deck.length===0 && market.length===0 && hands[0].length===0 && hands[1].length===0;
+  return deck.length===0&&market.length===0&&hands[0].length===0&&hands[1].length===0;
 }
 
 // ---- Interaction ----
 
 function handleCard(ci){
-  if(subphase!=='play') return;
-  if(vsAI&&curP===1) return;
+  if(subphase!=='play'||aiThinking||(vsAI&&curP===1)) return;
   const idx=selCards.indexOf(ci);
   if(idx>=0){ selCards.splice(idx,1); render(); return; }
   if(selCards.length===0){ selCards=[ci]; render(); return; }
   if(selCards.length===1){
-    const i1=hands[curP][selCards[0]], i2=hands[curP][ci];
+    const i1=hands[curP][selCards[0]],i2=hands[curP][ci];
     const connIdx=findConn(i1,i2);
-    if(connIdx>=0 && bridges[connIdx]===1-curP){
-      selCards=[selCards[0],ci];
-    } else {
-      selCards=[ci];
-    }
+    selCards=(connIdx>=0&&bridges[connIdx]===1-curP)?[selCards[0],ci]:[ci];
     render(); return;
   }
   selCards=[ci]; render();
@@ -499,32 +405,29 @@ function findConn(ia,ib){
 
 function scheduleAI(){
   aiThinking=true; render();
-  setTimeout(doAITurn, 700);
+  setTimeout(doAITurn,700);
 }
 
 function doAITurn(){
   aiThinking=false;
-  // Play phase: find best move and play it
   const move=findBestMove();
   if(move){
     if(move.type==='place') placebridge(move.h,move.ci);
     else removeBridge(move.h1,move.h2,move.ci);
     render();
   }
-  // Draw phase: pick best card after a short delay
   setTimeout(()=>{
-    endPlayPhase();
-    if(subphase==='draw') drawCard(bestDraw());
-  }, 500);
+    if(hands[1].length<5&&(deck.length>0||market.length>0)) drawAndEnd(bestDraw());
+    else doEndTurn();
+  },500);
 }
 
 function findBestMove(){
-  let best=-Infinity, bestMove=null;
+  let best=-Infinity,bestMove=null;
   const hand=hands[1];
   hand.forEach((isl,hi)=>{
     CONNS.forEach(([a,b],ci)=>{
-      if(a!==isl&&b!==isl) return;
-      if(bridges[ci]!==null) return;
+      if(a!==isl&&b!==isl||bridges[ci]!==null) return;
       const sc=evalPlace(ci,1);
       if(sc>best){ best=sc; bestMove={type:'place',h:hi,ci}; }
     });
@@ -541,8 +444,7 @@ function findBestMove(){
 }
 
 function evalPlace(ci,player){
-  const opp=1-player;
-  let score=0;
+  const opp=1-player; let score=0;
   CONNS[ci].forEach(isl=>{
     const cnt=[0,0];
     CONNS.forEach(([a,b],c2)=>{
@@ -551,8 +453,7 @@ function evalPlace(ci,player){
       if(br===0) cnt[0]++; else if(br===1) cnt[1]++;
     });
     const maj=MAJ[isl];
-    if(cnt[player]>=maj) score+=12;
-    else score+=(cnt[player]/maj)*4;
+    if(cnt[player]>=maj) score+=12; else score+=(cnt[player]/maj)*4;
     if(cnt[opp]===maj-1) score+=5;
     if(controlled[isl]===opp) score+=4;
     score+=DEG[isl]*0.3;
@@ -561,8 +462,7 @@ function evalPlace(ci,player){
 }
 
 function evalRemove(ci,player){
-  const opp=1-player;
-  let score=0;
+  const opp=1-player; let score=0;
   CONNS[ci].forEach(isl=>{
     const cnt=[0,0];
     CONNS.forEach(([a,b],c2)=>{
@@ -570,7 +470,7 @@ function evalRemove(ci,player){
       const br=c2===ci?null:bridges[c2];
       if(br===0) cnt[0]++; else if(br===1) cnt[1]++;
     });
-    if(controlled[isl]===opp && cnt[opp]<MAJ[isl]) score+=8;
+    if(controlled[isl]===opp&&cnt[opp]<MAJ[isl]) score+=8;
     if(cnt[opp]<MAJ[isl]) score+=4;
     score+=DEG[isl]*0.3;
   });
@@ -598,15 +498,23 @@ function bestDraw(){
   return best>0.5?bidx:'deck';
 }
 
+// ---- Card mini-map (uses the actual board image) ----
+function cardMiniMap(hl,isSel){
+  const p=POS[hl];
+  const ring=isSel?'#f0c060':'#c89030';
+  const fill=isSel?'rgba(240,192,96,0.35)':'rgba(180,120,20,0.3)';
+  // Same viewBox as the main board so coordinates match
+  return `<svg class="card-map" viewBox="5 100 458 402" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+    <image href="kahuna-board.jpg" x="0" y="0" width="647" height="613"/>
+    <circle cx="${p.x}" cy="${p.y}" r="30" fill="${fill}" stroke="${ring}" stroke-width="6" opacity="0.9"/>
+    <circle cx="${p.x}" cy="${p.y}" r="14" fill="${ring}" opacity="0.7"/>
+  </svg>`;
+}
+
 // ---- Render ----
 
 function render(){
-  renderScores();
-  renderStatus();
-  renderBoard();
-  renderMarket();
-  renderHands();
-  renderActions();
+  renderScores(); renderStatus(); renderBoard(); renderMarket(); renderHands(); renderActions();
 }
 
 function renderScores(){
@@ -630,19 +538,15 @@ function renderStatus(){
     el.style.color='#f0c060'; return;
   }
   if(aiThinking){ el.textContent=`${pnames[1]} is thinking…`; el.style.color='#4a8a60'; return; }
-  if(subphase==='draw'){
-    el.textContent=`${pnames[curP]} — draw one card from the market or deck`;
-    el.style.color=PC[curP]; return;
-  }
-  if(selCards.length===0) el.textContent=`${pnames[curP]}'s turn — play cards then click Finish Turn (or just Finish Turn to draw)`;
-  else if(selCards.length===1) el.textContent=`${ISLANDS[hands[curP][selCards[0]]]} — click a glowing connection to build`;
-  else el.textContent=`Two cards selected — click the highlighted bridge to remove it`;
+  if(selCards.length===0) el.textContent=`${pnames[curP]}'s turn — play cards, then draw to end your turn`;
+  else if(selCards.length===1) el.textContent=`${ISLANDS[hands[curP][selCards[0]]]} — click a glowing route to place a bridge`;
+  else el.textContent=`Two cards selected — click the enemy bridge to remove it`;
   el.style.color=PC[curP];
 }
 
 function renderBoard(){
   const svg=document.getElementById('board');
-  const validSet=new Set(), remSet=new Set();
+  const validSet=new Set(),remSet=new Set();
   if(subphase==='play'&&!aiThinking&&!(vsAI&&curP===1)){
     if(selCards.length===1){
       const isl=hands[curP][selCards[0]];
@@ -654,92 +558,49 @@ function renderBoard(){
     }
   }
 
-  let h=`<defs>
-    <radialGradient id="ocean" cx="50%" cy="45%" r="60%">
-      <stop offset="0%" stop-color="#1a7a9e"/>
-      <stop offset="50%" stop-color="#0e5070"/>
-      <stop offset="100%" stop-color="#082838"/>
-    </radialGradient>
-    <radialGradient id="isl0" cx="40%" cy="35%" r="65%">
-      <stop offset="0%" stop-color="#c8a050"/>
-      <stop offset="100%" stop-color="#7a5820"/>
-    </radialGradient>
-    <radialGradient id="isl1" cx="40%" cy="35%" r="65%">
-      <stop offset="0%" stop-color="#e8601a"/>
-      <stop offset="100%" stop-color="#8a2a04"/>
-    </radialGradient>
-    <radialGradient id="isl2" cx="40%" cy="35%" r="65%">
-      <stop offset="0%" stop-color="#22d3ee"/>
-      <stop offset="100%" stop-color="#065870"/>
-    </radialGradient>
-    <filter id="glow0"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-    <filter id="glow1"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-  </defs>
-  <rect width="660" height="500" fill="url(#ocean)"/>`;
+  let h='';
 
-  // Subtle wave lines
-  for(let y=60;y<500;y+=55){
-    const off=Math.sin(y*0.05)*8;
-    h+=`<path d="M0,${y+off} Q165,${y+off-6} 330,${y+off} Q495,${y+off+6} 660,${y+off}" fill="none" stroke="rgba(255,255,255,0.025)" stroke-width="1.5"/>`;
-  }
+  // Background: the actual Kahuna board photo
+  h+=`<image href="kahuna-board.jpg" x="0" y="0" width="647" height="613" preserveAspectRatio="xMidYMid meet"/>`;
 
-  // Connections (drawn before islands)
+  // Placed & highlighted bridges
   CONNS.forEach(([a,b],ci)=>{
     const pa=POS[a],pb=POS[b];
     const br=bridges[ci];
     const isV=validSet.has(ci),isR=remSet.has(ci);
 
-    // Hit area
-    h+=`<line x1="${pa.x}" y1="${pa.y}" x2="${pb.x}" y2="${pb.y}" stroke="transparent" stroke-width="20" style="cursor:${isV||isR?'pointer':'default'}" data-ci="${ci}" class="chit"/>`;
+    // Invisible wide hit area
+    h+=`<line x1="${pa.x}" y1="${pa.y}" x2="${pb.x}" y2="${pb.y}" stroke="transparent" stroke-width="22" style="cursor:${isV||isR?'pointer':'default'}" data-ci="${ci}" class="chit"/>`;
 
-    if(br===null&&!isV&&!isR){
-      // Faint dotted path — possible bridge location
-      h+=`<line x1="${pa.x}" y1="${pa.y}" x2="${pb.x}" y2="${pb.y}" stroke="rgba(200,200,160,0.12)" stroke-width="2" stroke-dasharray="5 7" stroke-linecap="round" pointer-events="none"/>`;
-    } else if(br===null&&isV){
-      // Glowing gold — valid placement
-      h+=`<line x1="${pa.x}" y1="${pa.y}" x2="${pb.x}" y2="${pb.y}" stroke="rgba(240,192,96,0.7)" stroke-width="4" stroke-dasharray="6 5" stroke-linecap="round" pointer-events="none"/>`;
-      h+=`<line x1="${pa.x}" y1="${pa.y}" x2="${pb.x}" y2="${pb.y}" stroke="rgba(240,192,96,0.2)" stroke-width="10" stroke-linecap="round" pointer-events="none"/>`;
-    } else if(br===null&&isR){
-      // Red — valid removal target (won't happen since remSet only has opponent bridges)
-    } else if(br!==null){
-      // Placed bridge
-      const col=PC[br];
-      const glow=PC_GLOW[br];
+    if(isV){
+      h+=`<line x1="${pa.x}" y1="${pa.y}" x2="${pb.x}" y2="${pb.y}" stroke="rgba(240,192,96,0.22)" stroke-width="12" stroke-linecap="round" pointer-events="none"/>`;
+      h+=`<line x1="${pa.x}" y1="${pa.y}" x2="${pb.x}" y2="${pb.y}" stroke="#f0c060" stroke-width="3" stroke-dasharray="9 6" stroke-linecap="round" pointer-events="none"/>`;
+    }
+    if(br!==null){
+      const col=PC[br],glow=PC_GLOW[br];
       // Shadow
-      h+=`<line x1="${pa.x+1}" y1="${pa.y+2}" x2="${pb.x+1}" y2="${pb.y+2}" stroke="rgba(0,0,0,0.4)" stroke-width="6" stroke-linecap="round" pointer-events="none"/>`;
-      // Glow
-      h+=`<line x1="${pa.x}" y1="${pa.y}" x2="${pb.x}" y2="${pb.y}" stroke="${glow}" stroke-width="10" stroke-linecap="round" pointer-events="none"/>`;
+      h+=`<line x1="${pa.x+1}" y1="${pa.y+3}" x2="${pb.x+1}" y2="${pb.y+3}" stroke="rgba(0,0,0,0.55)" stroke-width="7" stroke-linecap="round" pointer-events="none"/>`;
+      // Glow halo
+      h+=`<line x1="${pa.x}" y1="${pa.y}" x2="${pb.x}" y2="${pb.y}" stroke="${glow}" stroke-width="13" stroke-linecap="round" pointer-events="none"/>`;
       // Bridge line
-      h+=`<line x1="${pa.x}" y1="${pa.y}" x2="${pb.x}" y2="${pb.y}" stroke="${col}" stroke-width="${isR?5:4.5}" stroke-linecap="round" pointer-events="none"/>`;
+      h+=`<line x1="${pa.x}" y1="${pa.y}" x2="${pb.x}" y2="${pb.y}" stroke="${col}" stroke-width="5" stroke-linecap="round" pointer-events="none"/>`;
       if(isR){
-        h+=`<line x1="${pa.x}" y1="${pa.y}" x2="${pb.x}" y2="${pb.y}" stroke="rgba(239,68,68,0.8)" stroke-width="8" stroke-dasharray="5 4" stroke-linecap="round" pointer-events="none"/>`;
+        h+=`<line x1="${pa.x}" y1="${pa.y}" x2="${pb.x}" y2="${pb.y}" stroke="rgba(250,80,80,0.85)" stroke-width="8" stroke-dasharray="6 5" stroke-linecap="round" pointer-events="none"/>`;
       }
     }
   });
 
-  // Islands
+  // Island control markers (colored disc + glow)
   for(let i=0;i<12;i++){
-    const p=POS[i];
-    const ctrl=controlled[i];
-    const shape=SHAPES[i];
-    const sc=`translate(${p.x},${p.y})`;
-
-    // Drop shadow
-    h+=`<path d="${shape}" transform="translate(${p.x+2},${p.y+4})" fill="rgba(0,0,0,0.4)" pointer-events="none"/>`;
-
-    // Glow ring if controlled
-    if(ctrl!==null){
-      h+=`<path d="${shape}" transform="${sc} scale(1.3)" fill="none" stroke="${PC_GLOW[ctrl]}" stroke-width="8" pointer-events="none"/>`;
-    }
-
-    // Island body
-    const gradId=ctrl===0?'isl1':ctrl===1?'isl2':'isl0';
-    const strokeCol=ctrl===0?PC[0]:ctrl===1?PC[1]:'#b89040';
-    h+=`<path d="${shape}" transform="${sc}" fill="url(#${gradId})" stroke="${strokeCol}" stroke-width="${ctrl!==null?3:2}" pointer-events="none"/>`;
-
-    // Island name
-    const tc=ctrl===0?'#fff':ctrl===1?'#fff':'#f0d080';
-    h+=`<text x="${p.x}" y="${p.y+1}" text-anchor="middle" dominant-baseline="middle" fill="${tc}" font-size="10.5" font-weight="900" letter-spacing="0.8" pointer-events="none" font-family="Segoe UI,sans-serif" paint-order="stroke" stroke="rgba(0,0,0,0.6)" stroke-width="3.5">${ISLANDS[i]}</text>`;
+    const p=POS[i],ctrl=controlled[i];
+    if(ctrl===null) continue;
+    const col=PC[ctrl],glow=PC_GLOW[ctrl];
+    // Outer glow
+    h+=`<circle cx="${p.x}" cy="${p.y}" r="16" fill="${glow}" pointer-events="none"/>`;
+    // Disc
+    h+=`<circle cx="${p.x}" cy="${p.y}" r="11" fill="${col}" stroke="rgba(255,255,255,0.65)" stroke-width="2" pointer-events="none"/>`;
+    // Player indicator (1 or 2 dot)
+    h+=`<circle cx="${p.x}" cy="${p.y}" r="4" fill="rgba(0,0,0,0.4)" pointer-events="none"/>`;
   }
 
   svg.innerHTML=h;
@@ -751,26 +612,27 @@ function renderBoard(){
 
 function renderMarket(){
   const el=document.getElementById('market-row');
-  const isDraw=subphase==='draw'&&!(vsAI&&curP===1);
+  // Market is always active during play phase for the current human player
+  const canDraw=subphase==='play'&&!aiThinking&&!(vsAI&&curP===1);
   let h=`<span class="mlabel">MARKET</span>`;
   for(let i=0;i<3;i++){
     if(i<market.length){
-      h+=`<div class="mcard${isDraw?' active-draw':''}" data-mi="${i}">${cardMiniMap(market[i],false)}<div class="card-name" style="color:${isDraw?'#f0c060':'#a07840'}">${ISLANDS[market[i]]}</div></div>`;
+      h+=`<div class="card${canDraw?' draw-active':''}" data-mi="${i}">${cardMiniMap(market[i],false)}<div class="card-name" style="color:${canDraw?'#f0c060':'#a07840'}">${ISLANDS[market[i]]}</div></div>`;
     } else {
-      h+=`<div class="mcard empty-slot"><svg class="card-map" viewBox="0 0 72 82"><rect width="72" height="82" fill="#08180a"/></svg><div class="card-name">—</div></div>`;
+      h+=`<div class="card" style="cursor:default;opacity:0.18"><svg class="card-map" viewBox="5 100 458 402"><image href="kahuna-board.jpg" x="0" y="0" width="647" height="613"/></svg><div class="card-name">—</div></div>`;
     }
   }
-  h+=`<span class="mlabel" style="margin-left:12px">DECK</span>`;
+  h+=`<span class="mlabel" style="margin-left:14px">DECK</span>`;
   if(deck.length>0){
-    h+=`<div class="deck-btn${isDraw?' active-draw':''}" id="deck-btn">${deck.length}</div>`;
+    h+=`<div class="deck-btn${canDraw?' draw-active':''}" id="deck-btn">${deck.length}</div>`;
   } else {
     h+=`<div class="deck-btn empty">0</div>`;
   }
   el.innerHTML=h;
-  if(isDraw){
-    el.querySelectorAll('.mcard.active-draw').forEach(c=>c.addEventListener('click',()=>drawCard(parseInt(c.dataset.mi))));
+  if(canDraw){
+    el.querySelectorAll('.card.draw-active').forEach(c=>c.addEventListener('click',()=>drawAndEnd(parseInt(c.dataset.mi))));
     const db=el.querySelector('#deck-btn');
-    if(db) db.addEventListener('click',()=>drawCard('deck'));
+    if(db) db.addEventListener('click',()=>drawAndEnd('deck'));
   }
 }
 
@@ -787,7 +649,7 @@ function renderHands(){
       });
     } else {
       hand.forEach(()=>{
-        cardsHTML+=`<div class="card facedown"><svg class="card-map" viewBox="0 0 72 82"><rect width="72" height="82" fill="#0a1a0a"/><text x="36" y="44" text-anchor="middle" dominant-baseline="middle" fill="#1a3a1a" font-size="22" font-family="sans-serif">?</text></svg><div class="card-name" style="color:#1a3a1a">· · ·</div></div>`;
+        cardsHTML+=`<div class="card facedown"><svg class="card-map" viewBox="5 100 458 402"><image href="kahuna-board.jpg" x="0" y="0" width="647" height="613"/><rect x="5" y="100" width="458" height="402" fill="rgba(0,0,0,0.55)"/><text x="234" y="302" text-anchor="middle" dominant-baseline="middle" fill="#2a5a4a" font-size="60" font-family="sans-serif">?</text></svg><div class="card-name" style="color:#1a3a2a">· · ·</div></div>`;
       });
     }
     if(!cardsHTML) cardsHTML=`<span style="font-size:0.65rem;color:#2a4a30;align-self:center">—</span>`;
@@ -814,21 +676,17 @@ function renderActions(){
   }
   if((vsAI&&curP===1)||aiThinking) return;
   if(subphase==='play'){
-    const b=document.createElement('button');
-    b.className='btn go'; b.textContent='FINISH TURN →';
-    b.onclick=endPlayPhase;
-    el.appendChild(b);
+    // Only show END TURN when hand is full or nothing to draw (can't draw normally)
+    if(hands[curP].length>=5||(deck.length===0&&market.length===0)){
+      const b=document.createElement('button');
+      b.className='btn go'; b.textContent='END TURN'; b.onclick=doEndTurn;
+      el.appendChild(b);
+    }
     if(selCards.length>0){
       const c=document.createElement('button');
       c.className='btn'; c.textContent='DESELECT'; c.onclick=()=>{ selCards=[]; render(); };
       el.appendChild(c);
     }
-  }
-  if(subphase==='draw'){
-    const b=document.createElement('button');
-    b.className='btn'; b.textContent='SKIP DRAW';
-    b.onclick=()=>drawCard('skip');
-    el.appendChild(b);
   }
 }
 
