@@ -133,35 +133,51 @@ h1 {
 // ---- Constants ----
 const ISLANDS = ['LALE','IFFI','HUNA','KAHU','JOJO','GOLA','FAAA','COCO','BARI','ELAI','DUDA','ALOA'];
 
+// 23 connections — retraced from the dotted lines on the board image.
+// Key corrections vs original: LALE connects to KAHU (not JOJO), LALE connects
+// to ELAI (the near-vertical central spoke), JOJO connects to ELAI.
+// This gives ELAI degree 6: LALE, IFFI, JOJO, FAAA, BARI, DUDA.
 const CONNS = [
-  [0,1],[0,2],[0,4],   // LALE-IFFI, LALE-HUNA, LALE-JOJO
-  [1,2],[1,4],[1,9],   // IFFI-HUNA, IFFI-JOJO, IFFI-ELAI
-  [2,10],[2,11],        // HUNA-DUDA, HUNA-ALOA
-  [3,4],[3,5],          // KAHU-JOJO, KAHU-GOLA
-  [4,5],[4,6],          // JOJO-GOLA, JOJO-FAAA
-  [5,6],[5,7],          // GOLA-FAAA, GOLA-COCO
-  [6,8],[6,9],          // FAAA-BARI, FAAA-ELAI
-  [7,8],                // COCO-BARI
-  [8,9],[8,11],         // BARI-ELAI, BARI-ALOA
-  [9,10],               // ELAI-DUDA
-  [10,11],              // DUDA-ALOA
+  [0,1],   // LALE–IFFI
+  [0,2],   // LALE–HUNA
+  [0,3],   // LALE–KAHU  (long diagonal to far-left)
+  [0,9],   // LALE–ELAI  (near-vertical central spoke)
+  [1,2],   // IFFI–HUNA  (long horizontal cross)
+  [1,4],   // IFFI–JOJO
+  [1,9],   // IFFI–ELAI
+  [2,10],  // HUNA–DUDA
+  [2,11],  // HUNA–ALOA
+  [3,4],   // KAHU–JOJO
+  [3,5],   // KAHU–GOLA
+  [4,5],   // JOJO–GOLA
+  [4,6],   // JOJO–FAAA
+  [4,9],   // JOJO–ELAI
+  [5,6],   // GOLA–FAAA
+  [5,7],   // GOLA–COCO
+  [6,8],   // FAAA–BARI
+  [6,9],   // FAAA–ELAI
+  [7,8],   // COCO–BARI
+  [8,9],   // BARI–ELAI
+  [8,11],  // BARI–ALOA
+  [9,10],  // ELAI–DUDA
+  [10,11], // DUDA–ALOA
 ];
 
-// Island node positions calibrated to the 735×587 board image.
-// Each point is the hub where that island's dotted connection lines meet.
+// Hub coordinates in kahuna-board.jpg pixels (735×587).
+// Each point is where that island's dotted lines visually converge.
 const POS = [
-  {x:374, y:112},  // 0  LALE
-  {x:286, y:218},  // 1  IFFI
-  {x:560, y:216},  // 2  HUNA
-  {x:104, y:253},  // 3  KAHU
-  {x:246, y:268},  // 4  JOJO
-  {x:155, y:318},  // 5  GOLA
-  {x:202, y:365},  // 6  FAAA
-  {x:150, y:422},  // 7  COCO
+  {x:362, y:122},  // 0  LALE
+  {x:278, y:207},  // 1  IFFI
+  {x:578, y:217},  // 2  HUNA
+  {x:108, y:250},  // 3  KAHU
+  {x:242, y:263},  // 4  JOJO
+  {x:157, y:314},  // 5  GOLA
+  {x:205, y:358},  // 6  FAAA
+  {x:152, y:423},  // 7  COCO
   {x:348, y:432},  // 8  BARI
-  {x:382, y:324},  // 9  ELAI
-  {x:500, y:316},  // 10 DUDA
-  {x:626, y:406},  // 11 ALOA
+  {x:382, y:320},  // 9  ELAI
+  {x:498, y:313},  // 10 DUDA
+  {x:622, y:408},  // 11 ALOA
 ];
 
 const DEG = new Array(12).fill(0);
