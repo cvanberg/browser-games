@@ -56,53 +56,61 @@ h1 {
   margin-bottom:10px; overflow:hidden;
   box-shadow:0 8px 32px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,255,255,0.04);
 }
-.market-row { display:flex; align-items:center; gap:8px; margin-bottom:8px; flex-wrap:wrap; justify-content:center; }
-.mlabel { font-size:0.62rem; color:#4a6a50; letter-spacing:2px; font-family:'Segoe UI',sans-serif; }
-.mcard {
-  width:58px; height:52px; border-radius:8px;
-  background:linear-gradient(160deg,#1a0f05,#0e1a08);
-  border:2px solid #4a3820; cursor:pointer;
-  display:flex; align-items:center; justify-content:center;
-  font-size:0.58rem; font-weight:900; color:#a07840; text-align:center;
-  letter-spacing:0.5px; transition:all 0.12s; font-family:'Segoe UI',sans-serif;
-  box-shadow:inset 0 1px 0 rgba(255,220,120,0.08);
-}
-.mcard:hover { border-color:#f0c060; color:#f0c060; transform:translateY(-3px); box-shadow:0 4px 12px rgba(240,192,96,0.2); }
-.mcard.active-draw { border-color:#f0c060; box-shadow:0 0 10px rgba(240,192,96,0.4); color:#f0c060; }
-.mcard.empty-slot { cursor:default; opacity:0.2; }
-.mcard.empty-slot:hover { transform:none; border-color:#4a3820; color:#a07840; box-shadow:none; }
+.market-row { display:flex; align-items:flex-end; gap:10px; margin-bottom:10px; flex-wrap:wrap; justify-content:center; }
+.mlabel { font-size:0.62rem; color:#4a6a50; letter-spacing:2px; font-family:'Segoe UI',sans-serif; align-self:center; }
 .deck-btn {
-  width:46px; height:46px; border-radius:8px;
+  width:52px; height:52px; border-radius:8px;
   background:linear-gradient(160deg,#0c1a10,#081408);
   border:2px solid #2a4a30; cursor:pointer;
   display:flex; align-items:center; justify-content:center;
-  font-size:0.68rem; color:#4a7a50; transition:all 0.12s; font-weight:bold;
-  font-family:'Segoe UI',sans-serif;
+  font-size:0.7rem; color:#4a7a50; transition:all 0.12s; font-weight:bold;
+  font-family:'Segoe UI',sans-serif; align-self:center;
 }
 .deck-btn:hover { border-color:#f0c060; color:#f0c060; }
 .deck-btn.active-draw { border-color:#f0c060; box-shadow:0 0 10px rgba(240,192,96,0.4); color:#f0c060; }
 .deck-btn.empty { cursor:default; opacity:0.25; }
-.hands-wrap { width:100%; max-width:700px; }
-.player-area { margin-bottom:8px; }
-.player-label { font-size:0.62rem; letter-spacing:2px; margin-bottom:4px; font-family:'Segoe UI',sans-serif; }
-.hand { display:flex; gap:6px; flex-wrap:wrap; min-height:50px; }
+.hands-wrap { width:100%; max-width:760px; }
+.player-area { margin-bottom:10px; }
+.player-label { font-size:0.62rem; letter-spacing:2px; margin-bottom:5px; font-family:'Segoe UI',sans-serif; }
+.hand { display:flex; gap:7px; flex-wrap:wrap; min-height:100px; }
+/* Portrait card with mini-map */
 .card {
-  width:56px; height:48px; border-radius:8px;
-  background:linear-gradient(160deg,#1a0f05,#0e1a08);
-  border:2px solid #4a3820; display:flex; align-items:center; justify-content:center;
-  cursor:pointer; font-size:0.6rem; font-weight:900; letter-spacing:0.5px;
-  text-align:center; color:#a07840; user-select:none; transition:all 0.1s;
-  font-family:'Segoe UI',sans-serif; box-shadow:inset 0 1px 0 rgba(255,220,120,0.06);
+  width:72px; height:100px; border-radius:8px;
+  background:linear-gradient(175deg,#1c110a,#0e1c0a);
+  border:2px solid #5a3e1a; display:flex; flex-direction:column;
+  align-items:stretch; cursor:pointer; user-select:none;
+  transition:all 0.12s; overflow:hidden;
+  box-shadow:2px 3px 8px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,220,120,0.07);
 }
-.card:hover { border-color:#f0c060; color:#f0c060; transform:translateY(-4px); box-shadow:0 4px 14px rgba(0,0,0,0.4); }
+.card:hover { border-color:#f0c060; transform:translateY(-5px); box-shadow:2px 8px 18px rgba(0,0,0,0.5); }
 .card.sel {
-  border-color:#f0c060; color:#f0c060;
-  background:linear-gradient(160deg,#2a1a04,#1a2a08);
-  box-shadow:0 0 0 2px #f0c060, 0 0 14px rgba(240,192,96,0.5);
-  transform:translateY(-6px);
+  border-color:#f0c060;
+  box-shadow:0 0 0 2px #f0c060, 0 0 18px rgba(240,192,96,0.55), 2px 10px 20px rgba(0,0,0,0.5);
+  transform:translateY(-8px);
 }
-.card.facedown { cursor:default; color:#2a3a2a; border-color:#1a2a1a; }
-.card.facedown:hover { transform:none; border-color:#1a2a1a; color:#2a3a2a; box-shadow:none; }
+.card.facedown { cursor:default; border-color:#1a2a1a; }
+.card.facedown:hover { transform:none; box-shadow:2px 3px 8px rgba(0,0,0,0.5); }
+.card-map { flex:1; display:block; }
+.card-name {
+  text-align:center; font-size:0.55rem; font-weight:900; letter-spacing:1px;
+  font-family:'Segoe UI',sans-serif; color:#a07840;
+  padding:3px 2px 4px; border-top:1px solid #3a2810;
+  background:rgba(0,0,0,0.25);
+}
+.card.sel .card-name { color:#f0c060; }
+/* Market cards same style as hand cards */
+.mcard {
+  width:72px; height:100px; border-radius:8px;
+  background:linear-gradient(175deg,#1c110a,#0e1c0a);
+  border:2px solid #5a3e1a; display:flex; flex-direction:column;
+  align-items:stretch; cursor:pointer; user-select:none;
+  transition:all 0.12s; overflow:hidden;
+  box-shadow:2px 3px 8px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,220,120,0.07);
+}
+.mcard:hover { border-color:#f0c060; transform:translateY(-4px); }
+.mcard.active-draw { border-color:#f0c060; box-shadow:0 0 12px rgba(240,192,96,0.5); }
+.mcard.empty-slot { cursor:default; opacity:0.18; }
+.mcard.empty-slot:hover { transform:none; }
 .actions { display:flex; gap:8px; justify-content:center; margin-bottom:8px; flex-wrap:wrap; min-height:36px; }
 .legend { margin-top:6px; font-size:0.63rem; color:#2a4a30; text-align:center; line-height:2; max-width:660px; font-family:'Segoe UI',sans-serif; }
 .legend span { color:#3a6a40; }
@@ -170,6 +178,58 @@ const POS = [
 const DEG = new Array(12).fill(0);
 CONNS.forEach(([a,b])=>{ DEG[a]++; DEG[b]++; });
 const MAJ = DEG.map(d => Math.floor(d/2)+1);
+
+// Unique organic island shapes (SVG paths centered at origin, scaled for the 660×500 board)
+const SHAPES = [
+  // 0 LALE — large, main island, prominent irregular oval
+  'M-38,-8 C-30,-22 -4,-28 22,-20 C42,-12 48,-2 42,12 C36,24 12,28 -12,24 C-32,20 -46,8 -40,-4 Z',
+  // 1 IFFI — medium, pear-shaped wider at base
+  'M-14,-17 C-2,-25 16,-20 20,-6 C24,8 14,20 -2,20 C-14,20 -22,10 -20,-4 Z',
+  // 2 HUNA — elongated east-west (like a stretched atoll)
+  'M-36,-5 C-24,-17 6,-20 28,-13 C44,-6 44,6 28,13 C10,20 -14,18 -30,8 C-42,0 -44,-2 -36,-5 Z',
+  // 3 KAHU — tiny, simple
+  'M-11,-6 C-4,-13 8,-11 12,-3 C14,5 8,12 -2,12 C-10,10 -14,2 -11,-6 Z',
+  // 4 JOJO — medium, roundish but irregular left coast
+  'M-22,-13 C-8,-23 14,-19 22,-6 C28,6 20,18 4,20 C-10,22 -24,12 -26,-2 Z',
+  // 5 GOLA — tall narrow elongated N-S
+  'M-10,-22 C0,-30 12,-24 14,-10 C16,4 8,20 -2,24 C-10,24 -16,14 -16,0 C-16,-14 -10,-22 -10,-22 Z',
+  // 6 FAAA — medium, slightly wedge-shaped
+  'M-24,-10 C-10,-22 12,-18 22,-6 C28,4 24,16 8,20 C-8,22 -26,12 -26,-2 Z',
+  // 7 COCO — tiny, roundish
+  'M-9,-5 C-3,-11 7,-9 10,-2 C12,6 6,12 -2,11 C-9,9 -12,1 -9,-5 Z',
+  // 8 BARI — medium, squat, wider than tall
+  'M-24,-8 C-12,-18 12,-16 20,-5 C28,5 22,15 4,18 C-10,20 -24,10 -24,-2 Z',
+  // 9 ELAI — smaller, elongated like a thin crescent
+  'M-19,-6 C-10,-16 8,-14 16,-5 C22,3 18,13 4,15 C-8,16 -20,6 -20,-3 Z',
+  // 10 DUDA — medium, roughly diamond shaped
+  'M-2,-20 C8,-22 18,-12 18,-2 C18,10 10,20 -2,20 C-14,20 -20,10 -18,-2 C-16,-14 -8,-20 -2,-20 Z',
+  // 11 ALOA — medium with a small southern peninsula
+  'M-16,-12 C-2,-22 14,-18 18,-4 C20,8 12,16 0,20 L-2,28 C-10,26 -12,18 -6,14 C-16,10 -24,0 -22,-6 Z',
+];
+
+// Mini-map SVG for a card, highlighting one island
+function cardMiniMap(hl, isSel){
+  // viewBox spans the island region with a little padding
+  const VX=10, VY=30, VW=660, VH=460;
+  const ocean = isSel ? '#1a3a14' : '#08283a';
+  let s=`<svg class="card-map" viewBox="${VX} ${VY} ${VW} ${VH}" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">`;
+  s+=`<rect x="${VX}" y="${VY}" width="${VW}" height="${VH}" fill="${ocean}"/>`;
+  // Connections
+  CONNS.forEach(([a,b])=>{
+    s+=`<line x1="${POS[a].x}" y1="${POS[a].y}" x2="${POS[b].x}" y2="${POS[b].y}" stroke="rgba(180,200,160,0.18)" stroke-width="9"/>`;
+  });
+  // Non-highlighted islands
+  for(let i=0;i<12;i++){
+    if(i===hl) continue;
+    s+=`<path d="${SHAPES[i]}" transform="translate(${POS[i].x},${POS[i].y})" fill="#2a5030" stroke="#3a7040" stroke-width="5"/>`;
+  }
+  // Highlighted island — prominent gold
+  const hlGlow = isSel ? '#f0c060' : '#c89030';
+  s+=`<ellipse cx="${POS[hl].x}" cy="${POS[hl].y}" rx="52" ry="36" fill="none" stroke="${hlGlow}" stroke-width="10" opacity="0.35"/>`;
+  s+=`<path d="${SHAPES[hl]}" transform="translate(${POS[hl].x},${POS[hl].y}) scale(1.15)" fill="${isSel?'#c89030':'#8a6020'}" stroke="${hlGlow}" stroke-width="8"/>`;
+  s+=`</svg>`;
+  return s;
+}
 
 // Player colours: coral-orange / tropical-teal
 const PC = ['#f97316','#22d3ee'];
@@ -671,23 +731,25 @@ function renderBoard(){
   for(let i=0;i<12;i++){
     const p=POS[i];
     const ctrl=controlled[i];
-    const rx=33,ry=20;
+    const shape=SHAPES[i];
+    const sc=`translate(${p.x},${p.y})`;
 
     // Drop shadow
-    h+=`<ellipse cx="${p.x+2}" cy="${p.y+4}" rx="${rx}" ry="${ry}" fill="rgba(0,0,0,0.35)"/>`;
-
-    // Island body
-    const gradId=ctrl===0?'isl1':ctrl===1?'isl2':'isl0';
-    h+=`<ellipse cx="${p.x}" cy="${p.y}" rx="${rx}" ry="${ry}" fill="url(#${gradId})" stroke="${ctrl===0?PC[0]:ctrl===1?PC[1]:'#b89040'}" stroke-width="${ctrl!==null?2.5:1.5}"/>`;
+    h+=`<path d="${shape}" transform="translate(${p.x+2},${p.y+4})" fill="rgba(0,0,0,0.4)" pointer-events="none"/>`;
 
     // Glow ring if controlled
     if(ctrl!==null){
-      h+=`<ellipse cx="${p.x}" cy="${p.y}" rx="${rx+4}" ry="${ry+3}" fill="none" stroke="${PC_GLOW[ctrl]}" stroke-width="6"/>`;
+      h+=`<path d="${shape}" transform="${sc} scale(1.3)" fill="none" stroke="${PC_GLOW[ctrl]}" stroke-width="8" pointer-events="none"/>`;
     }
+
+    // Island body
+    const gradId=ctrl===0?'isl1':ctrl===1?'isl2':'isl0';
+    const strokeCol=ctrl===0?PC[0]:ctrl===1?PC[1]:'#b89040';
+    h+=`<path d="${shape}" transform="${sc}" fill="url(#${gradId})" stroke="${strokeCol}" stroke-width="${ctrl!==null?3:2}" pointer-events="none"/>`;
 
     // Island name
     const tc=ctrl===0?'#fff':ctrl===1?'#fff':'#f0d080';
-    h+=`<text x="${p.x}" y="${p.y+1}" text-anchor="middle" dominant-baseline="middle" fill="${tc}" font-size="10" font-weight="900" letter-spacing="0.8" pointer-events="none" font-family="Segoe UI,sans-serif" paint-order="stroke" stroke="rgba(0,0,0,0.5)" stroke-width="3">${ISLANDS[i]}</text>`;
+    h+=`<text x="${p.x}" y="${p.y+1}" text-anchor="middle" dominant-baseline="middle" fill="${tc}" font-size="10.5" font-weight="900" letter-spacing="0.8" pointer-events="none" font-family="Segoe UI,sans-serif" paint-order="stroke" stroke="rgba(0,0,0,0.6)" stroke-width="3.5">${ISLANDS[i]}</text>`;
   }
 
   svg.innerHTML=h;
@@ -703,9 +765,9 @@ function renderMarket(){
   let h=`<span class="mlabel">MARKET</span>`;
   for(let i=0;i<3;i++){
     if(i<market.length){
-      h+=`<div class="mcard${isDraw?' active-draw':''}" data-mi="${i}">${ISLANDS[market[i]]}</div>`;
+      h+=`<div class="mcard${isDraw?' active-draw':''}" data-mi="${i}">${cardMiniMap(market[i],false)}<div class="card-name" style="color:${isDraw?'#f0c060':'#a07840'}">${ISLANDS[market[i]]}</div></div>`;
     } else {
-      h+=`<div class="mcard empty-slot">—</div>`;
+      h+=`<div class="mcard empty-slot"><svg class="card-map" viewBox="0 0 72 82"><rect width="72" height="82" fill="#08180a"/></svg><div class="card-name">—</div></div>`;
     }
   }
   h+=`<span class="mlabel" style="margin-left:12px">DECK</span>`;
@@ -731,10 +793,12 @@ function renderHands(){
     if(showFace){
       hand.forEach((isl,ci)=>{
         const isSel=pi===curP&&selCards.includes(ci);
-        cardsHTML+=`<div class="card${isSel?' sel':''}" data-pi="${pi}" data-ci="${ci}">${ISLANDS[isl]}</div>`;
+        cardsHTML+=`<div class="card${isSel?' sel':''}" data-pi="${pi}" data-ci="${ci}">${cardMiniMap(isl,isSel)}<div class="card-name">${ISLANDS[isl]}</div></div>`;
       });
     } else {
-      hand.forEach(()=>{ cardsHTML+=`<div class="card facedown">· · ·</div>`; });
+      hand.forEach(()=>{
+        cardsHTML+=`<div class="card facedown"><svg class="card-map" viewBox="0 0 72 82"><rect width="72" height="82" fill="#0a1a0a"/><text x="36" y="44" text-anchor="middle" dominant-baseline="middle" fill="#1a3a1a" font-size="22" font-family="sans-serif">?</text></svg><div class="card-name" style="color:#1a3a1a">· · ·</div></div>`;
+      });
     }
     if(!cardsHTML) cardsHTML=`<span style="font-size:0.65rem;color:#2a4a30;align-self:center">—</span>`;
     return `<div class="player-area">
