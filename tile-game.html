@@ -439,12 +439,13 @@ function commitToRow(pIdx, lineIdx) {
   const toPlace = Math.min(srcTiles.length, space);
   const overflow = srcTiles.length - toPlace;
 
-  // Commit source state (not destination yet)
+  // Commit source state — remainder tiles are NOT added to center yet;
+  // each one is added only when its animation lands, so the center pool
+  // stays empty until the tiles visually arrive there.
   pendingSource = null;
   animating = true;
   if (src.type === 'factory') {
     factories[src.factoryIdx] = [];
-    center.push(...remainTiles);
   } else {
     center = center.filter(t => t !== color);
     if (centerHasFirstToken) {
@@ -471,29 +472,25 @@ function commitToRow(pIdx, lineIdx) {
 
   let srcLanded = 0, remLanded = 0;
 
-  // Fill the row as soon as the last SELECTED tile lands — before remainder tiles are done
   const onSrcLand = () => {
     playClick();
     if (++srcLanded === srcCount) { fillRow(); render(); if (remCount === 0) finish(); }
   };
-  const onRemLand = () => {
-    playClick();
-    if (++remLanded === remCount) finish();
-  };
 
-  if (srcCount === 0) { fillRow(); render(); } // edge case: no src rects found
+  if (srcCount === 0) { fillRow(); render(); }
 
   srcRects.forEach((rect, i) => {
     if (rowRect) flyTile(rect, rowRect, color, i * STAGGER, onSrcLand);
     else setTimeout(onSrcLand, i * STAGGER + LAND);
   });
 
-  // Remainder tiles start flying after all src tiles have landed
+  // Each remainder tile is added to center exactly when it lands
   const remStart = srcCount * STAGGER + LAND;
   remainTiles.forEach((tc, i) => {
     const rect = remainderRects[i];
-    if (rect && poolRect) flyTile(rect, poolRect, tc, remStart + i * STAGGER, onRemLand);
-    else setTimeout(onRemLand, remStart + i * STAGGER + LAND);
+    const onLand = () => { center.push(tc); playClick(); if (++remLanded === remCount) finish(); };
+    if (rect && poolRect) flyTile(rect, poolRect, tc, remStart + i * STAGGER, onLand);
+    else setTimeout(onLand, remStart + i * STAGGER + LAND);
   });
 }
 
@@ -934,13 +931,13 @@ function executeAIMove(move, rects) {
   const {srcRects = [], remainderRects = [], rowRect = null, poolRect = null} = rects || {};
   const ai = players[1];
 
-  // Commit source state
+  // Commit source state — remainder tiles NOT added to center yet;
+  // each one is added only when its animation lands.
   const remainTiles = move.source === 'factory'
     ? factories[move.factoryIdx].filter(t => t !== move.color) : [];
   let srcTiles;
   if (move.source === 'factory') {
     srcTiles = factories[move.factoryIdx].filter(t => t === move.color);
-    center.push(...remainTiles);
     factories[move.factoryIdx] = [];
   } else {
     srcTiles = center.filter(t => t === move.color);
@@ -953,6 +950,7 @@ function executeAIMove(move, rects) {
 
   // Floor-all case: no row animation
   if (move.lineIdx === -1) {
+    center.push(...remainTiles);
     for (const t of srcTiles) { if (ai.floor.length < 7) ai.floor.push(t); else discard.push(t); }
     playFloor();
     afterPlace();
@@ -986,10 +984,6 @@ function executeAIMove(move, rects) {
     playClick();
     if (++srcLanded === srcCount) { fillRow(); render(); if (remCount === 0) finish(); }
   };
-  const onRemLand = () => {
-    playClick();
-    if (++remLanded === remCount) finish();
-  };
 
   if (srcCount === 0) { fillRow(); render(); }
 
@@ -998,11 +992,13 @@ function executeAIMove(move, rects) {
     else setTimeout(onSrcLand, i * STAGGER + LAND);
   });
 
+  // Each remainder tile is added to center exactly when its animation lands
   const remStart = srcCount * STAGGER + LAND;
   remainTiles.forEach((tc, i) => {
     const rect = remainderRects[i];
-    if (rect && poolRect) flyTile(rect, poolRect, tc, remStart + i * STAGGER, onRemLand);
-    else setTimeout(onRemLand, remStart + i * STAGGER + LAND);
+    const onLand = () => { center.push(tc); playClick(); if (++remLanded === remCount) finish(); };
+    if (rect && poolRect) flyTile(rect, poolRect, tc, remStart + i * STAGGER, onLand);
+    else setTimeout(onLand, remStart + i * STAGGER + LAND);
   });
 }
 
