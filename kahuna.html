@@ -6,55 +6,111 @@
 <title>Kahuna</title>
 <style>
 * { box-sizing:border-box; margin:0; padding:0; }
-body { background:#0a192f; color:#eee; font-family:'Segoe UI',sans-serif; padding:10px; min-height:100vh; display:flex; flex-direction:column; align-items:center; }
-h1 { text-align:center; font-size:2.2rem; color:#e2b96f; letter-spacing:8px; font-weight:900; margin-bottom:2px; }
-.subtitle { text-align:center; font-size:0.72rem; color:#446; letter-spacing:2px; margin-bottom:8px; }
+body {
+  background: linear-gradient(160deg, #0e3d52 0%, #061e30 55%, #0b2818 100%);
+  color:#e8d5a3; font-family:'Georgia',serif; padding:10px;
+  min-height:100vh; display:flex; flex-direction:column; align-items:center;
+}
+h1 {
+  text-align:center; font-size:2.6rem; color:#f0c060;
+  letter-spacing:10px; font-weight:900; margin-bottom:0;
+  text-shadow: 0 0 30px rgba(240,192,96,0.4), 0 2px 4px rgba(0,0,0,0.6);
+}
+.subtitle { text-align:center; font-size:0.7rem; color:#5a8a70; letter-spacing:3px; margin-bottom:8px; font-family:'Segoe UI',sans-serif; }
 .mode-selector { display:flex; gap:10px; justify-content:center; margin-bottom:8px; align-items:center; }
 .select-wrap { position:relative; display:inline-flex; align-items:center; }
-.select-wrap::after { content:'▾'; position:absolute; right:10px; pointer-events:none; color:#e2b96f; font-size:1rem; }
-.mode-select { background:#0f2035; border:2px solid #e2b96f; color:#e2b96f; border-radius:8px; padding:5px 28px 5px 14px; font-size:0.78rem; font-weight:bold; cursor:pointer; letter-spacing:1px; appearance:none; -webkit-appearance:none; outline:none; }
-.btn { background:transparent; border:2px solid #2a4a7f; color:#668; border-radius:8px; padding:5px 14px; font-size:0.78rem; font-weight:bold; cursor:pointer; letter-spacing:1px; transition:all 0.15s; }
-.btn:hover { border-color:#e2b96f; color:#e2b96f; }
-.btn.active { border-color:#e2b96f; color:#e2b96f; background:#0f2035; }
-.btn.go { border-color:#e2b96f; color:#e2b96f; }
-.btn.go:hover { background:#e2b96f; color:#1a1a2e; }
-.score-panel { display:flex; justify-content:center; gap:40px; margin-bottom:6px; }
+.select-wrap::after { content:'▾'; position:absolute; right:10px; pointer-events:none; color:#f0c060; font-size:1rem; }
+.mode-select {
+  background:#0a1f12; border:2px solid #4a7a50; color:#a0c878;
+  border-radius:8px; padding:5px 28px 5px 14px; font-size:0.75rem;
+  font-weight:bold; cursor:pointer; letter-spacing:1px;
+  appearance:none; -webkit-appearance:none; outline:none; font-family:'Segoe UI',sans-serif;
+}
+.btn {
+  background:transparent; border:2px solid #2a5a3a; color:#5a8a60;
+  border-radius:8px; padding:5px 14px; font-size:0.75rem; font-weight:bold;
+  cursor:pointer; letter-spacing:1px; transition:all 0.15s; font-family:'Segoe UI',sans-serif;
+}
+.btn:hover { border-color:#f0c060; color:#f0c060; }
+.btn.active { border-color:#4a7a50; color:#a0c878; background:#0a1f12; }
+.btn.go { border-color:#c8860a; color:#f0c060; background:rgba(200,134,10,0.12); }
+.btn.go:hover { background:#c8860a; color:#fff; }
+.score-panel { display:flex; justify-content:center; gap:48px; margin-bottom:6px; }
 .score-item { text-align:center; min-width:80px; }
-.score-name { font-size:0.68rem; letter-spacing:1px; }
-.score-val { font-size:1.6rem; font-weight:900; line-height:1; }
-.score-islands { font-size:0.68rem; color:#668; }
-.status-bar { text-align:center; font-size:0.88rem; font-weight:600; min-height:22px; margin-bottom:6px; }
-.scoring-banner { text-align:center; background:#0f2035; border:2px solid #e2b96f; border-radius:8px; padding:8px 20px; margin-bottom:6px; display:none; font-size:0.82rem; }
-.scoring-banner h3 { color:#e2b96f; font-size:0.78rem; letter-spacing:2px; margin-bottom:4px; }
-.board-wrap { background:#071628; border-radius:12px; border:2px solid #1a3a6e; margin-bottom:8px; }
+.score-name { font-size:0.65rem; letter-spacing:2px; font-family:'Segoe UI',sans-serif; }
+.score-val { font-size:1.8rem; font-weight:900; line-height:1; }
+.score-islands { font-size:0.65rem; color:#4a6a50; font-family:'Segoe UI',sans-serif; }
+.status-bar {
+  text-align:center; font-size:0.85rem; font-weight:600; min-height:22px;
+  margin-bottom:6px; font-family:'Segoe UI',sans-serif; color:#a0b890;
+}
+.scoring-banner {
+  text-align:center; background:rgba(10,30,15,0.85); border:2px solid #c8860a;
+  border-radius:10px; padding:10px 24px; margin-bottom:6px; display:none;
+  font-size:0.82rem; font-family:'Segoe UI',sans-serif;
+  box-shadow:0 0 20px rgba(200,134,10,0.3);
+}
+.scoring-banner h3 { color:#f0c060; font-size:0.75rem; letter-spacing:2px; margin-bottom:4px; }
+.board-wrap {
+  border-radius:14px; border:3px solid #1a4a2a;
+  margin-bottom:10px; overflow:hidden;
+  box-shadow:0 8px 32px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,255,255,0.04);
+}
 .market-row { display:flex; align-items:center; gap:8px; margin-bottom:8px; flex-wrap:wrap; justify-content:center; }
-.mlabel { font-size:0.65rem; color:#446; letter-spacing:1px; }
-.mcard { width:54px; height:48px; border-radius:6px; background:#0f2035; border:2px solid #2a4a7f; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-weight:900; color:#aaa; text-align:center; letter-spacing:0.5px; transition:all 0.12s; }
-.mcard:hover { border-color:#e2b96f; color:#e2b96f; transform:translateY(-2px); }
-.mcard.active-draw { border-color:#e2b96f; box-shadow:0 0 8px rgba(226,185,111,0.4); }
-.mcard.empty-slot { cursor:default; opacity:0.25; }
-.mcard.empty-slot:hover { transform:none; border-color:#2a4a7f; color:#aaa; }
-.deck-btn { width:44px; height:44px; border-radius:6px; background:#0f2035; border:2px solid #2a4a7f; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:0.65rem; color:#668; transition:all 0.12s; font-weight:bold; }
-.deck-btn:hover { border-color:#e2b96f; color:#e2b96f; }
-.deck-btn.active-draw { border-color:#e2b96f; box-shadow:0 0 8px rgba(226,185,111,0.4); }
-.deck-btn.empty { cursor:default; opacity:0.3; }
+.mlabel { font-size:0.62rem; color:#4a6a50; letter-spacing:2px; font-family:'Segoe UI',sans-serif; }
+.mcard {
+  width:58px; height:52px; border-radius:8px;
+  background:linear-gradient(160deg,#1a0f05,#0e1a08);
+  border:2px solid #4a3820; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  font-size:0.58rem; font-weight:900; color:#a07840; text-align:center;
+  letter-spacing:0.5px; transition:all 0.12s; font-family:'Segoe UI',sans-serif;
+  box-shadow:inset 0 1px 0 rgba(255,220,120,0.08);
+}
+.mcard:hover { border-color:#f0c060; color:#f0c060; transform:translateY(-3px); box-shadow:0 4px 12px rgba(240,192,96,0.2); }
+.mcard.active-draw { border-color:#f0c060; box-shadow:0 0 10px rgba(240,192,96,0.4); color:#f0c060; }
+.mcard.empty-slot { cursor:default; opacity:0.2; }
+.mcard.empty-slot:hover { transform:none; border-color:#4a3820; color:#a07840; box-shadow:none; }
+.deck-btn {
+  width:46px; height:46px; border-radius:8px;
+  background:linear-gradient(160deg,#0c1a10,#081408);
+  border:2px solid #2a4a30; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  font-size:0.68rem; color:#4a7a50; transition:all 0.12s; font-weight:bold;
+  font-family:'Segoe UI',sans-serif;
+}
+.deck-btn:hover { border-color:#f0c060; color:#f0c060; }
+.deck-btn.active-draw { border-color:#f0c060; box-shadow:0 0 10px rgba(240,192,96,0.4); color:#f0c060; }
+.deck-btn.empty { cursor:default; opacity:0.25; }
 .hands-wrap { width:100%; max-width:700px; }
-.player-area { margin-bottom:6px; }
-.player-label { font-size:0.65rem; letter-spacing:1px; margin-bottom:3px; }
-.hand { display:flex; gap:5px; flex-wrap:wrap; min-height:46px; }
-.card { width:52px; height:44px; border-radius:6px; background:#0f2035; border:2px solid #2a4a7f; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:0.58rem; font-weight:900; letter-spacing:0.5px; text-align:center; color:#aaa; user-select:none; transition:all 0.1s; }
-.card:hover { border-color:#e2b96f; color:#e2b96f; transform:translateY(-3px); }
-.card.sel { border-color:#e2b96f; color:#e2b96f; background:#1a2e4a; box-shadow:0 0 0 2px #e2b96f, 0 0 10px rgba(226,185,111,0.45); transform:translateY(-5px); }
-.card.facedown { cursor:default; color:#2a4a7f; }
-.card.facedown:hover { transform:none; border-color:#2a4a7f; color:#2a4a7f; }
-.actions { display:flex; gap:8px; justify-content:center; margin-bottom:8px; flex-wrap:wrap; min-height:34px; }
-.legend { margin-top:8px; font-size:0.64rem; color:#335; text-align:center; line-height:1.9; max-width:660px; }
-.legend span { color:#557; }
+.player-area { margin-bottom:8px; }
+.player-label { font-size:0.62rem; letter-spacing:2px; margin-bottom:4px; font-family:'Segoe UI',sans-serif; }
+.hand { display:flex; gap:6px; flex-wrap:wrap; min-height:50px; }
+.card {
+  width:56px; height:48px; border-radius:8px;
+  background:linear-gradient(160deg,#1a0f05,#0e1a08);
+  border:2px solid #4a3820; display:flex; align-items:center; justify-content:center;
+  cursor:pointer; font-size:0.6rem; font-weight:900; letter-spacing:0.5px;
+  text-align:center; color:#a07840; user-select:none; transition:all 0.1s;
+  font-family:'Segoe UI',sans-serif; box-shadow:inset 0 1px 0 rgba(255,220,120,0.06);
+}
+.card:hover { border-color:#f0c060; color:#f0c060; transform:translateY(-4px); box-shadow:0 4px 14px rgba(0,0,0,0.4); }
+.card.sel {
+  border-color:#f0c060; color:#f0c060;
+  background:linear-gradient(160deg,#2a1a04,#1a2a08);
+  box-shadow:0 0 0 2px #f0c060, 0 0 14px rgba(240,192,96,0.5);
+  transform:translateY(-6px);
+}
+.card.facedown { cursor:default; color:#2a3a2a; border-color:#1a2a1a; }
+.card.facedown:hover { transform:none; border-color:#1a2a1a; color:#2a3a2a; box-shadow:none; }
+.actions { display:flex; gap:8px; justify-content:center; margin-bottom:8px; flex-wrap:wrap; min-height:36px; }
+.legend { margin-top:6px; font-size:0.63rem; color:#2a4a30; text-align:center; line-height:2; max-width:660px; font-family:'Segoe UI',sans-serif; }
+.legend span { color:#3a6a40; }
 </style>
 </head>
 <body>
 <h1>KAHUNA</h1>
-<p class="subtitle">POLYNESIAN BRIDGE GAME · 2 PLAYERS</p>
+<p class="subtitle">POLYNESIAN ISLAND STRATEGY · 2 PLAYERS</p>
 <div class="mode-selector">
   <div class="select-wrap">
     <select class="mode-select" id="mode-sel" onchange="setMode(this.value)">
@@ -76,29 +132,26 @@ h1 { text-align:center; font-size:2.2rem; color:#e2b96f; letter-spacing:8px; fon
 <div class="legend">
   <span>Select a card</span> to highlight valid connections · <span>Click a connection</span> to place a bridge ·
   <span>Select 2 cards</span> naming both ends of an opponent's bridge to remove it<br>
-  Control an island by owning more than half its bridges — opponent's bridges on that island are removed · Three scoring phases: 1pt · 2pt · island difference
+  Control an island by owning more than half its bridges — opponent's bridges are removed · Three scoring phases: 1pt · 2pt · island difference
 </div>
 <script>
 // ---- Constants ----
 const ISLANDS = ['LALE','IFFI','HUNA','KAHU','JOJO','GOLA','FAAA','COCO','BARI','ELAI','DUDA','ALOA'];
 
-// Each pair [a,b] is one bridge slot (a < b)
 const CONNS = [
-  [0,1],[0,2],[0,4],        // LALE–IFFI, LALE–HUNA, LALE–JOJO
-  [1,2],[1,4],[1,9],        // IFFI–HUNA, IFFI–JOJO, IFFI–ELAI
-  [2,10],[2,11],             // HUNA–DUDA, HUNA–ALOA
-  [3,4],[3,5],               // KAHU–JOJO, KAHU–GOLA
-  [4,5],[4,6],               // JOJO–GOLA, JOJO–FAAA
-  [5,6],[5,7],               // GOLA–FAAA, GOLA–COCO
-  [6,8],[6,9],               // FAAA–BARI, FAAA–ELAI
-  [7,8],                     // COCO–BARI
-  [8,9],[8,11],              // BARI–ELAI, BARI–ALOA
-  [9,10],                    // ELAI–DUDA
-  [10,11],                   // DUDA–ALOA
+  [0,1],[0,2],[0,4],
+  [1,2],[1,4],[1,9],
+  [2,10],[2,11],
+  [3,4],[3,5],
+  [4,5],[4,6],
+  [5,6],[5,7],
+  [6,8],[6,9],
+  [7,8],
+  [8,9],[8,11],
+  [9,10],
+  [10,11],
 ];
-// 21 connections total
 
-// Island SVG positions
 const POS = [
   {x:330,y:52},   // 0 LALE
   {x:208,y:132},  // 1 IFFI
@@ -114,14 +167,14 @@ const POS = [
   {x:524,y:430},  // 11 ALOA
 ];
 
-// Degree of each island (computed from CONNS)
 const DEG = new Array(12).fill(0);
 CONNS.forEach(([a,b])=>{ DEG[a]++; DEG[b]++; });
-// Majority threshold: strictly more than half
 const MAJ = DEG.map(d => Math.floor(d/2)+1);
 
-const PC = ['#3b82f6','#ef4444']; // player colours: blue, red
-const PC_DIM = ['#1e3a5e','#4a1418'];
+// Player colours: coral-orange / tropical-teal
+const PC = ['#f97316','#22d3ee'];
+const PC_GLOW = ['rgba(249,115,22,0.35)','rgba(34,211,238,0.35)'];
+const PC_FILL = ['rgba(120,40,5,0.7)','rgba(5,60,80,0.7)'];
 
 // ---- Audio ----
 let audioCtx=null, soundOn=true;
@@ -183,7 +236,6 @@ function sndScore(){
 let deck,market,hands,bridges,controlled,scores,
     curP,subphase,scoringRound,totalDraws,
     selCards,vsAI,aiThinking,pnames,scored;
-// subphase: 'play' | 'draw' | 'over'
 
 function setMode(v){
   vsAI = v!=='2p';
@@ -192,21 +244,17 @@ function setMode(v){
 }
 
 function initGame(){
-  // Build & shuffle deck
   deck=[];
   for(let i=0;i<12;i++){ deck.push(i); deck.push(i); }
   shuffle(deck);
-  // Deal hands
   hands=[[],[]];
   hands[0]=deck.splice(0,3);
   hands[1]=deck.splice(0,3);
-  // Market: 3 face-up cards
   market=deck.splice(0,3);
-  // Board state
-  bridges=new Array(CONNS.length).fill(null); // null | 0 | 1
-  controlled=new Array(12).fill(null);         // null | 0 | 1
+  bridges=new Array(CONNS.length).fill(null);
+  controlled=new Array(12).fill(null);
   scores=[0,0];
-  curP=0; subphase='play'; scoringRound=0; totalDraws=0;
+  curP=0; subphase='draw'; scoringRound=0; totalDraws=0;
   selCards=[]; aiThinking=false; scored=[false,false,false];
   render();
   if(vsAI && curP===1) scheduleAI();
@@ -221,7 +269,6 @@ function shuffle(a){
 
 // ---- Game Logic ----
 
-// Place a bridge: remove card at handIdx, set bridge, resolve majorities
 function placebridge(handIdx, ci){
   const isl=hands[curP][handIdx];
   if(!CONNS[ci].includes(isl)) return false;
@@ -235,13 +282,11 @@ function placebridge(handIdx, ci){
   return true;
 }
 
-// Remove opponent bridge: play 2 cards naming its endpoints
 function removeBridge(h1,h2,ci){
   const [a,b]=CONNS[ci];
   const i1=hands[curP][h1], i2=hands[curP][h2];
   if(!((i1===a&&i2===b)||(i1===b&&i2===a))) return false;
   if(bridges[ci]!==1-curP) return false;
-  // Remove cards (higher index first)
   const hi=Math.max(h1,h2), lo=Math.min(h1,h2);
   hands[curP].splice(hi,1); hands[curP].splice(lo,1);
   bridges[ci]=null;
@@ -252,7 +297,6 @@ function removeBridge(h1,h2,ci){
   return true;
 }
 
-// Iterative majority resolution (handles cascade)
 function resolveAll(){
   let changed=true;
   while(changed){
@@ -272,7 +316,6 @@ function resolveAll(){
         controlled[isl]=next;
         changed=true;
         if(next!==null){
-          // Remove loser's bridges from this island
           const loser=1-next;
           CONNS.forEach(([a,b],ci)=>{
             if((a===isl||b===isl)&&bridges[ci]===loser) bridges[ci]=null;
@@ -287,20 +330,22 @@ function resolveAll(){
 // ---- Turn Flow ----
 
 function endPlayPhase(){
-  // Move to draw phase if possible
-  if(hands[curP].length<5 && (deck.length>0||market.length>0)){
-    subphase='draw';
-    render();
-  } else {
-    endTurn();
+  selCards=[];
+  if(isGameOver()){
+    subphase='over';
+    [1,2,3].forEach((ph,i)=>{ if(!scored[i]){ scored[i]=true; doScoring(ph); } });
+    render(); return;
   }
+  endTurn();
 }
 
-function drawCard(src){ // src: 'deck' | market index (number)
+function drawCard(src){
   if(subphase!=='draw') return;
-  if(hands[curP].length>=5){ endTurn(); return; }
+  if(src==='skip'||( hands[curP].length>=5)){
+    subphase='play'; render(); return;
+  }
   if(src==='deck'){
-    if(!deck.length){ endTurn(); return; }
+    if(!deck.length){ subphase='play'; render(); return; }
     hands[curP].push(deck.shift());
   } else {
     if(market[src]===undefined){ return; }
@@ -310,13 +355,12 @@ function drawCard(src){ // src: 'deck' | market index (number)
   }
   totalDraws++;
   checkScoring();
-  endTurn();
+  subphase='play';
+  render();
 }
 
 function checkScoring(){
-  // Trigger scoring at draws 5, 10, 15
-  const thresholds=[5,10,15];
-  thresholds.forEach((th,phase)=>{
+  [5,10,15].forEach((th,phase)=>{
     if(!scored[phase] && totalDraws>=th){
       scored[phase]=true;
       doScoring(phase+1);
@@ -324,38 +368,35 @@ function checkScoring(){
   });
 }
 
-function doScoring(phase){ // phase 1,2,3
+function doScoring(phase){
   const ic=[0,0];
   controlled.forEach(c=>{ if(c===0)ic[0]++; else if(c===1)ic[1]++; });
   let pts=0,winner=-1;
-  if(phase===1){ pts=1; }
-  else if(phase===2){ pts=2; }
-  else { pts=Math.abs(ic[0]-ic[1]); }
-  if(ic[0]>ic[1]){ winner=0; }
-  else if(ic[1]>ic[0]){ winner=1; }
+  if(phase===1) pts=1;
+  else if(phase===2) pts=2;
+  else pts=Math.abs(ic[0]-ic[1]);
+  if(ic[0]>ic[1]) winner=0;
+  else if(ic[1]>ic[0]) winner=1;
   if(winner>=0) scores[winner]+=(phase<3?pts:(ic[winner]-ic[1-winner]));
-  if(phase===3){ scores[winner>=0?winner:0]+=0; } // ensure final scored
   sndScore();
   const banner=document.getElementById('scoring-banner');
-  const label=['FIRST SCORING  ·  ×1','SECOND SCORING  ·  ×2','FINAL SCORING'][phase-1];
+  const label=['FIRST SCORING  ·  1 POINT','SECOND SCORING  ·  2 POINTS','FINAL SCORING'][phase-1];
   const res = winner>=0
     ? `${pnames[winner]} leads ${ic[winner]}–${ic[1-winner]} islands → +${phase<3?pts:Math.abs(ic[0]-ic[1])} pt${pts!==1?'s':''}`
-    : `Tied ${ic[0]}–${ic[1]} islands → no points`;
+    : `Tied ${ic[0]}–${ic[1]} islands — no points awarded`;
   banner.innerHTML=`<h3>${label}</h3>${res}`;
   banner.style.display='block';
   setTimeout(()=>banner.style.display='none',3500);
 }
 
 function endTurn(){
-  selCards=[];
-  if(isGameOver()){
-    subphase='over';
-    // Trigger any remaining scoring phases
-    [1,2,3].forEach((ph,i)=>{ if(!scored[i]){ scored[i]=true; doScoring(ph); } });
-    render(); return;
-  }
   curP=1-curP;
-  subphase='play';
+  // Skip draw phase if nothing available or hand full
+  if((deck.length===0 && market.length===0) || hands[curP].length>=5){
+    subphase='play';
+  } else {
+    subphase='draw';
+  }
   render();
   if(vsAI&&curP===1) scheduleAI();
 }
@@ -373,13 +414,12 @@ function handleCard(ci){
   if(idx>=0){ selCards.splice(idx,1); render(); return; }
   if(selCards.length===0){ selCards=[ci]; render(); return; }
   if(selCards.length===1){
-    // Check if 2-card removal possible
     const i1=hands[curP][selCards[0]], i2=hands[curP][ci];
     const connIdx=findConn(i1,i2);
     if(connIdx>=0 && bridges[connIdx]===1-curP){
-      selCards=[selCards[0],ci]; // set up for removal
+      selCards=[selCards[0],ci];
     } else {
-      selCards=[ci]; // switch selection
+      selCards=[ci];
     }
     render(); return;
   }
@@ -388,11 +428,8 @@ function handleCard(ci){
 
 function handleConn(ci){
   if(vsAI&&curP===1) return;
-  if(selCards.length===1){
-    placebridge(selCards[0],ci);
-  } else if(selCards.length===2){
-    removeBridge(selCards[0],selCards[1],ci);
-  }
+  if(selCards.length===1) placebridge(selCards[0],ci);
+  else if(selCards.length===2) removeBridge(selCards[0],selCards[1],ci);
 }
 
 function findConn(ia,ib){
@@ -403,32 +440,37 @@ function findConn(ia,ib){
 
 function scheduleAI(){
   aiThinking=true; render();
-  setTimeout(()=>{ aiThinking=false; doAITurn(); },700);
+  setTimeout(doAITurn, 700);
 }
 
 function doAITurn(){
-  // Find best action and play it
-  const move=findBestMove();
-  if(move){
-    if(move.type==='place') placebridge(move.h,move.ci);
-    else removeBridge(move.h1,move.h2,move.ci);
-    render();
-  }
-  // Draw: pick best market card or deck
-  setTimeout(()=>{
-    if(subphase==='play') endPlayPhase();
-    if(subphase==='draw'){
-      const best=bestDraw();
-      drawCard(best);
+  aiThinking=false;
+  if(subphase==='draw'){
+    // Draw first, then play
+    drawCard(bestDraw());
+    setTimeout(()=>{
+      const move=findBestMove();
+      if(move){
+        if(move.type==='place') placebridge(move.h,move.ci);
+        else removeBridge(move.h1,move.h2,move.ci);
+        render();
+      }
+      endPlayPhase();
+    }, 500);
+  } else {
+    const move=findBestMove();
+    if(move){
+      if(move.type==='place') placebridge(move.h,move.ci);
+      else removeBridge(move.h1,move.h2,move.ci);
+      render();
     }
-    render();
-  },500);
+    endPlayPhase();
+  }
 }
 
 function findBestMove(){
   let best=-Infinity, bestMove=null;
   const hand=hands[1];
-  // Placements
   hand.forEach((isl,hi)=>{
     CONNS.forEach(([a,b],ci)=>{
       if(a!==isl&&b!==isl) return;
@@ -437,7 +479,6 @@ function findBestMove(){
       if(sc>best){ best=sc; bestMove={type:'place',h:hi,ci}; }
     });
   });
-  // Removals
   for(let i=0;i<hand.length;i++){
     for(let j=i+1;j<hand.length;j++){
       const ci=findConn(hand[i],hand[j]);
@@ -453,7 +494,6 @@ function evalPlace(ci,player){
   const opp=1-player;
   let score=0;
   CONNS[ci].forEach(isl=>{
-    // Simulate placing bridge
     const cnt=[0,0];
     CONNS.forEach(([a,b],c2)=>{
       if(a!==isl&&b!==isl) return;
@@ -461,10 +501,10 @@ function evalPlace(ci,player){
       if(br===0) cnt[0]++; else if(br===1) cnt[1]++;
     });
     const maj=MAJ[isl];
-    if(cnt[player]>=maj) score+=12;       // capture!
-    else score+=(cnt[player]/maj)*4;       // progress
-    if(cnt[opp]===maj-1) score+=5;        // blocking opponent's capture
-    if(controlled[isl]===opp) score+=4;   // attacking opponent island
+    if(cnt[player]>=maj) score+=12;
+    else score+=(cnt[player]/maj)*4;
+    if(cnt[opp]===maj-1) score+=5;
+    if(controlled[isl]===opp) score+=4;
     score+=DEG[isl]*0.3;
   });
   return score;
@@ -477,10 +517,10 @@ function evalRemove(ci,player){
     const cnt=[0,0];
     CONNS.forEach(([a,b],c2)=>{
       if(a!==isl&&b!==isl) return;
-      const br=c2===ci?null:bridges[c2]; // simulate removal
+      const br=c2===ci?null:bridges[c2];
       if(br===0) cnt[0]++; else if(br===1) cnt[1]++;
     });
-    if(controlled[isl]===opp && cnt[opp]<MAJ[isl]) score+=8; // dislodge opponent
+    if(controlled[isl]===opp && cnt[opp]<MAJ[isl]) score+=8;
     if(cnt[opp]<MAJ[isl]) score+=4;
     score+=DEG[isl]*0.3;
   });
@@ -494,10 +534,9 @@ function bestDraw(){
     let val=0;
     CONNS.forEach(([a,b],ci)=>{
       if(a!==isl&&b!==isl) return;
-      if(bridges[ci]===null) val+=1;     // free conn = card useful
-      if(bridges[ci]===0) val+=0.3;     // could remove
+      if(bridges[ci]===null) val+=1;
+      if(bridges[ci]===0) val+=0.3;
     });
-    // Near-majority bonus
     const cnt=[0,0];
     CONNS.forEach(([a,b],ci)=>{
       if(a!==isl&&b!==isl) return;
@@ -506,7 +545,6 @@ function bestDraw(){
     if(cnt[1]===MAJ[isl]-1) val+=6;
     if(val>best){ best=val; bidx=mi; }
   });
-  // Deck is ok too; pick market if it's clearly better
   return best>0.5?bidx:'deck';
 }
 
@@ -536,24 +574,24 @@ function renderStatus(){
   const el=document.getElementById('status-bar');
   if(subphase==='over'){
     const w=scores[0]>scores[1]?0:scores[1]>scores[0]?1:-1;
-    el.innerHTML=w>=0?`Game over — <strong style="color:${PC[w]}">${pnames[w]} wins ${scores[w]}–${scores[1-w]}!</strong>`
+    el.innerHTML=w>=0
+      ?`Game over — <strong style="color:${PC[w]}">${pnames[w]} wins ${scores[w]}–${scores[1-w]}!</strong>`
       :`Game over — Tie! ${scores[0]}–${scores[1]}`;
-    el.style.color='#e2b96f'; return;
+    el.style.color='#f0c060'; return;
   }
-  if(aiThinking){ el.textContent=`${pnames[1]} is thinking…`; el.style.color='#888'; return; }
+  if(aiThinking){ el.textContent=`${pnames[1]} is thinking…`; el.style.color='#4a8a60'; return; }
   if(subphase==='draw'){
-    el.textContent=`${pnames[curP]} — click a market card or deck to draw`;
+    el.textContent=`${pnames[curP]} — draw a card to start your turn`;
     el.style.color=PC[curP]; return;
   }
-  if(selCards.length===0) el.textContent=`${pnames[curP]}'s turn — select a card to place a bridge`;
-  else if(selCards.length===1) el.textContent=`${ISLANDS[hands[curP][selCards[0]]]} selected — click a highlighted connection`;
-  else el.textContent=`2 cards selected — click the highlighted connection to remove opponent's bridge`;
+  if(selCards.length===0) el.textContent=`${pnames[curP]} — play cards, then click Finish Turn`;
+  else if(selCards.length===1) el.textContent=`${ISLANDS[hands[curP][selCards[0]]]} — click a glowing connection to build`;
+  else el.textContent=`Two cards selected — click the highlighted bridge to remove it`;
   el.style.color=PC[curP];
 }
 
 function renderBoard(){
   const svg=document.getElementById('board');
-  // Valid connections based on selection
   const validSet=new Set(), remSet=new Set();
   if(subphase==='play'&&!aiThinking&&!(vsAI&&curP===1)){
     if(selCards.length===1){
@@ -566,37 +604,90 @@ function renderBoard(){
     }
   }
 
-  let h='';
+  let h=`<defs>
+    <radialGradient id="ocean" cx="50%" cy="45%" r="60%">
+      <stop offset="0%" stop-color="#1a7a9e"/>
+      <stop offset="50%" stop-color="#0e5070"/>
+      <stop offset="100%" stop-color="#082838"/>
+    </radialGradient>
+    <radialGradient id="isl0" cx="40%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#c8a050"/>
+      <stop offset="100%" stop-color="#7a5820"/>
+    </radialGradient>
+    <radialGradient id="isl1" cx="40%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#e8601a"/>
+      <stop offset="100%" stop-color="#8a2a04"/>
+    </radialGradient>
+    <radialGradient id="isl2" cx="40%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#22d3ee"/>
+      <stop offset="100%" stop-color="#065870"/>
+    </radialGradient>
+    <filter id="glow0"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <filter id="glow1"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <rect width="660" height="500" fill="url(#ocean)"/>`;
 
-  // Connections
+  // Subtle wave lines
+  for(let y=60;y<500;y+=55){
+    const off=Math.sin(y*0.05)*8;
+    h+=`<path d="M0,${y+off} Q165,${y+off-6} 330,${y+off} Q495,${y+off+6} 660,${y+off}" fill="none" stroke="rgba(255,255,255,0.025)" stroke-width="1.5"/>`;
+  }
+
+  // Connections (drawn before islands)
   CONNS.forEach(([a,b],ci)=>{
     const pa=POS[a],pb=POS[b];
     const br=bridges[ci];
     const isV=validSet.has(ci),isR=remSet.has(ci);
-    let color='#1a3a6e', sw=3, dash='8 6';
-    if(br===0){ color=PC[0]; sw=4; dash=''; }
-    else if(br===1){ color=PC[1]; sw=4; dash=''; }
-    else if(isV){ color='rgba(226,185,111,0.55)'; dash='7 5'; }
-    else if(isR){ color='rgba(239,68,68,0.75)'; sw=4; dash='6 4'; }
-    const di=dash?`stroke-dasharray="${dash}"`:'';
+
     // Hit area
-    h+=`<line x1="${pa.x}" y1="${pa.y}" x2="${pb.x}" y2="${pb.y}" stroke="transparent" stroke-width="18" style="cursor:${isV||isR?'pointer':'default'}" data-ci="${ci}" class="chit"/>`;
-    // Visual
-    h+=`<line x1="${pa.x}" y1="${pa.y}" x2="${pb.x}" y2="${pb.y}" stroke="${color}" stroke-width="${sw}" ${di} stroke-linecap="round" pointer-events="none"/>`;
+    h+=`<line x1="${pa.x}" y1="${pa.y}" x2="${pb.x}" y2="${pb.y}" stroke="transparent" stroke-width="20" style="cursor:${isV||isR?'pointer':'default'}" data-ci="${ci}" class="chit"/>`;
+
+    if(br===null&&!isV&&!isR){
+      // Faint dotted path — possible bridge location
+      h+=`<line x1="${pa.x}" y1="${pa.y}" x2="${pb.x}" y2="${pb.y}" stroke="rgba(200,200,160,0.12)" stroke-width="2" stroke-dasharray="5 7" stroke-linecap="round" pointer-events="none"/>`;
+    } else if(br===null&&isV){
+      // Glowing gold — valid placement
+      h+=`<line x1="${pa.x}" y1="${pa.y}" x2="${pb.x}" y2="${pb.y}" stroke="rgba(240,192,96,0.7)" stroke-width="4" stroke-dasharray="6 5" stroke-linecap="round" pointer-events="none"/>`;
+      h+=`<line x1="${pa.x}" y1="${pa.y}" x2="${pb.x}" y2="${pb.y}" stroke="rgba(240,192,96,0.2)" stroke-width="10" stroke-linecap="round" pointer-events="none"/>`;
+    } else if(br===null&&isR){
+      // Red — valid removal target (won't happen since remSet only has opponent bridges)
+    } else if(br!==null){
+      // Placed bridge
+      const col=PC[br];
+      const glow=PC_GLOW[br];
+      // Shadow
+      h+=`<line x1="${pa.x+1}" y1="${pa.y+2}" x2="${pb.x+1}" y2="${pb.y+2}" stroke="rgba(0,0,0,0.4)" stroke-width="6" stroke-linecap="round" pointer-events="none"/>`;
+      // Glow
+      h+=`<line x1="${pa.x}" y1="${pa.y}" x2="${pb.x}" y2="${pb.y}" stroke="${glow}" stroke-width="10" stroke-linecap="round" pointer-events="none"/>`;
+      // Bridge line
+      h+=`<line x1="${pa.x}" y1="${pa.y}" x2="${pb.x}" y2="${pb.y}" stroke="${col}" stroke-width="${isR?5:4.5}" stroke-linecap="round" pointer-events="none"/>`;
+      if(isR){
+        h+=`<line x1="${pa.x}" y1="${pa.y}" x2="${pb.x}" y2="${pb.y}" stroke="rgba(239,68,68,0.8)" stroke-width="8" stroke-dasharray="5 4" stroke-linecap="round" pointer-events="none"/>`;
+      }
+    }
   });
 
   // Islands
   for(let i=0;i<12;i++){
     const p=POS[i];
     const ctrl=controlled[i];
-    const bc=ctrl===0?PC[0]:ctrl===1?PC[1]:'#2a4a7f';
-    const fc=ctrl===0?'#0d1e3a':ctrl===1?'#2a0a0a':'#0a1a2e';
-    const tc=ctrl===0?PC[0]:ctrl===1?PC[1]:'#7799bb';
-    h+=`<ellipse cx="${p.x}" cy="${p.y}" rx="32" ry="19" fill="${fc}" stroke="${bc}" stroke-width="${ctrl!==null?3:2}"/>`;
-    h+=`<text x="${p.x}" y="${p.y+1}" text-anchor="middle" dominant-baseline="middle" fill="${tc}" font-size="10.5" font-weight="900" letter-spacing="0.5" pointer-events="none" font-family="Segoe UI,sans-serif">${ISLANDS[i]}</text>`;
+    const rx=33,ry=20;
+
+    // Drop shadow
+    h+=`<ellipse cx="${p.x+2}" cy="${p.y+4}" rx="${rx}" ry="${ry}" fill="rgba(0,0,0,0.35)"/>`;
+
+    // Island body
+    const gradId=ctrl===0?'isl1':ctrl===1?'isl2':'isl0';
+    h+=`<ellipse cx="${p.x}" cy="${p.y}" rx="${rx}" ry="${ry}" fill="url(#${gradId})" stroke="${ctrl===0?PC[0]:ctrl===1?PC[1]:'#b89040'}" stroke-width="${ctrl!==null?2.5:1.5}"/>`;
+
+    // Glow ring if controlled
     if(ctrl!==null){
-      h+=`<circle cx="${p.x+24}" cy="${p.y-13}" r="5" fill="${PC[ctrl]}" stroke="rgba(0,0,0,0.4)" stroke-width="1.5"/>`;
+      h+=`<ellipse cx="${p.x}" cy="${p.y}" rx="${rx+4}" ry="${ry+3}" fill="none" stroke="${PC_GLOW[ctrl]}" stroke-width="6"/>`;
     }
+
+    // Island name
+    const tc=ctrl===0?'#fff':ctrl===1?'#fff':'#f0d080';
+    h+=`<text x="${p.x}" y="${p.y+1}" text-anchor="middle" dominant-baseline="middle" fill="${tc}" font-size="10" font-weight="900" letter-spacing="0.8" pointer-events="none" font-family="Segoe UI,sans-serif" paint-order="stroke" stroke="rgba(0,0,0,0.5)" stroke-width="3">${ISLANDS[i]}</text>`;
   }
 
   svg.innerHTML=h;
@@ -617,7 +708,7 @@ function renderMarket(){
       h+=`<div class="mcard empty-slot">—</div>`;
     }
   }
-  h+=`<span class="mlabel" style="margin-left:10px">DECK</span>`;
+  h+=`<span class="mlabel" style="margin-left:12px">DECK</span>`;
   if(deck.length>0){
     h+=`<div class="deck-btn${isDraw?' active-draw':''}" id="deck-btn">${deck.length}</div>`;
   } else {
@@ -643,16 +734,15 @@ function renderHands(){
         cardsHTML+=`<div class="card${isSel?' sel':''}" data-pi="${pi}" data-ci="${ci}">${ISLANDS[isl]}</div>`;
       });
     } else {
-      hand.forEach((_,ci)=>{ cardsHTML+=`<div class="card facedown">?</div>`; });
+      hand.forEach(()=>{ cardsHTML+=`<div class="card facedown">· · ·</div>`; });
     }
-    if(!cardsHTML) cardsHTML=`<span style="font-size:0.65rem;color:#446;align-self:center">—</span>`;
+    if(!cardsHTML) cardsHTML=`<span style="font-size:0.65rem;color:#2a4a30;align-self:center">—</span>`;
     return `<div class="player-area">
       <div class="player-label" style="color:${PC[pi]}">${name.toUpperCase()} · ${hand.length} CARD${hand.length!==1?'S':''}</div>
       <div class="hand">${cardsHTML}</div>
     </div>`;
   });
   el.innerHTML=parts.join('');
-  // Wire clicks for current player
   if(subphase==='play'&&!aiThinking&&!(vsAI&&curP===1)){
     el.querySelectorAll(`.card:not(.facedown)[data-pi="${curP}"]`).forEach(c=>{
       c.addEventListener('click',()=>handleCard(parseInt(c.dataset.ci)));
@@ -668,10 +758,10 @@ function renderActions(){
     b.className='btn go'; b.textContent='NEW GAME'; b.onclick=initGame;
     el.appendChild(b); return;
   }
-  if(vsAI&&curP===1||aiThinking) return;
+  if((vsAI&&curP===1)||aiThinking) return;
   if(subphase==='play'){
     const b=document.createElement('button');
-    b.className='btn go'; b.textContent='DONE PLAYING →';
+    b.className='btn go'; b.textContent='FINISH TURN →';
     b.onclick=endPlayPhase;
     el.appendChild(b);
     if(selCards.length>0){
@@ -683,7 +773,7 @@ function renderActions(){
   if(subphase==='draw'){
     const b=document.createElement('button');
     b.className='btn'; b.textContent='SKIP DRAW';
-    b.onclick=endTurn;
+    b.onclick=()=>drawCard('skip');
     el.appendChild(b);
   }
 }
