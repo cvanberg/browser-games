@@ -314,7 +314,7 @@ function initGame(){
   bridges=new Array(CONNS.length).fill(null);
   controlled=new Array(12).fill(null);
   scores=[0,0];
-  curP=0; subphase='draw'; scoringRound=0; totalDraws=0;
+  curP=0; subphase='play'; scoringRound=0; totalDraws=0;
   selCards=[]; aiThinking=false; scored=[false,false,false];
   render();
   if(vsAI && curP===1) scheduleAI();
@@ -391,21 +391,20 @@ function resolveAll(){
 
 function endPlayPhase(){
   selCards=[];
-  if(isGameOver()){
-    subphase='over';
-    [1,2,3].forEach((ph,i)=>{ if(!scored[i]){ scored[i]=true; doScoring(ph); } });
-    render(); return;
+  // Draw one card after playing, unless hand is full or nothing left
+  if(hands[curP].length<5 && (deck.length>0||market.length>0)){
+    subphase='draw';
+    render();
+  } else {
+    doEndTurn();
   }
-  endTurn();
 }
 
 function drawCard(src){
   if(subphase!=='draw') return;
-  if(src==='skip'||( hands[curP].length>=5)){
-    subphase='play'; render(); return;
-  }
+  if(src==='skip'){ doEndTurn(); return; }
   if(src==='deck'){
-    if(!deck.length){ subphase='play'; render(); return; }
+    if(!deck.length){ doEndTurn(); return; }
     hands[curP].push(deck.shift());
   } else {
     if(market[src]===undefined){ return; }
@@ -415,8 +414,7 @@ function drawCard(src){
   }
   totalDraws++;
   checkScoring();
-  subphase='play';
-  render();
+  doEndTurn();
 }
 
 function checkScoring(){
@@ -449,14 +447,15 @@ function doScoring(phase){
   setTimeout(()=>banner.style.display='none',3500);
 }
 
-function endTurn(){
-  curP=1-curP;
-  // Skip draw phase if nothing available or hand full
-  if((deck.length===0 && market.length===0) || hands[curP].length>=5){
-    subphase='play';
-  } else {
-    subphase='draw';
+function doEndTurn(){
+  selCards=[];
+  if(isGameOver()){
+    subphase='over';
+    [1,2,3].forEach((ph,i)=>{ if(!scored[i]){ scored[i]=true; doScoring(ph); } });
+    render(); return;
   }
+  curP=1-curP;
+  subphase='play';
   render();
   if(vsAI&&curP===1) scheduleAI();
 }
@@ -505,27 +504,18 @@ function scheduleAI(){
 
 function doAITurn(){
   aiThinking=false;
-  if(subphase==='draw'){
-    // Draw first, then play
-    drawCard(bestDraw());
-    setTimeout(()=>{
-      const move=findBestMove();
-      if(move){
-        if(move.type==='place') placebridge(move.h,move.ci);
-        else removeBridge(move.h1,move.h2,move.ci);
-        render();
-      }
-      endPlayPhase();
-    }, 500);
-  } else {
-    const move=findBestMove();
-    if(move){
-      if(move.type==='place') placebridge(move.h,move.ci);
-      else removeBridge(move.h1,move.h2,move.ci);
-      render();
-    }
-    endPlayPhase();
+  // Play phase: find best move and play it
+  const move=findBestMove();
+  if(move){
+    if(move.type==='place') placebridge(move.h,move.ci);
+    else removeBridge(move.h1,move.h2,move.ci);
+    render();
   }
+  // Draw phase: pick best card after a short delay
+  setTimeout(()=>{
+    endPlayPhase();
+    if(subphase==='draw') drawCard(bestDraw());
+  }, 500);
 }
 
 function findBestMove(){
@@ -641,10 +631,10 @@ function renderStatus(){
   }
   if(aiThinking){ el.textContent=`${pnames[1]} is thinking…`; el.style.color='#4a8a60'; return; }
   if(subphase==='draw'){
-    el.textContent=`${pnames[curP]} — draw a card to start your turn`;
+    el.textContent=`${pnames[curP]} — draw one card from the market or deck`;
     el.style.color=PC[curP]; return;
   }
-  if(selCards.length===0) el.textContent=`${pnames[curP]} — play cards, then click Finish Turn`;
+  if(selCards.length===0) el.textContent=`${pnames[curP]}'s turn — play cards then click Finish Turn (or just Finish Turn to draw)`;
   else if(selCards.length===1) el.textContent=`${ISLANDS[hands[curP][selCards[0]]]} — click a glowing connection to build`;
   else el.textContent=`Two cards selected — click the highlighted bridge to remove it`;
   el.style.color=PC[curP];
