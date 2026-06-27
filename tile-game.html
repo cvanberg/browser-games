@@ -152,7 +152,13 @@ h1 {
 .mode-btn { background:transparent; border:2px solid #2a4a7f; color:#668; border-radius:8px; padding:5px 14px; font-size:0.78rem; font-weight:bold; cursor:pointer; letter-spacing:1px; transition:all 0.15s; }
 .mode-btn:hover { border-color:#e2b96f; color:#e2b96f; }
 .mode-btn.active { border-color:#e2b96f; color:#e2b96f; background:#0f2035; }
-.mode-select { background:#0f2035; border:2px solid #e2b96f; color:#e2b96f; border-radius:8px; padding:5px 14px; font-size:0.78rem; font-weight:bold; cursor:pointer; letter-spacing:1px; appearance:none; -webkit-appearance:none; outline:none; }
+.select-wrap { position:relative; display:inline-flex; align-items:center; }
+.select-wrap::after { content:'▾'; position:absolute; right:10px; pointer-events:none; color:#e2b96f; font-size:1rem; line-height:1; }
+.mode-select { background:#0f2035; border:2px solid #e2b96f; color:#e2b96f; border-radius:8px; padding:5px 28px 5px 14px; font-size:0.78rem; font-weight:bold; cursor:pointer; letter-spacing:1px; appearance:none; -webkit-appearance:none; outline:none; }
+
+/* Floor as a pick target */
+.floor-section.valid-target { cursor:pointer; border-radius:5px; transition:background 0.12s; }
+.floor-section.valid-target:hover { background:rgba(231,76,60,0.13); }
 
 /* Selected-tile highlight */
 .factory-tile.selected { box-shadow:0 0 0 2px #e2b96f, 0 0 9px rgba(226,185,111,0.55); transform:scale(1.18); filter:brightness(1.28); position:relative; z-index:2; }
@@ -167,11 +173,13 @@ h1 {
 <h1>TILE GAME</h1>
 <p class="subtitle">AZUL-STYLE TILE GAME</p>
 <div class="mode-selector">
-  <select class="mode-select" id="mode-select" onchange="setMode(this.value)">
-    <option value="2p">2 PLAYERS</option>
-    <option value="myopic" selected>MYOPIC BOT</option>
-    <option value="minimax">MINIMAX BOT</option>
-  </select>
+  <div class="select-wrap">
+    <select class="mode-select" id="mode-select" onchange="setMode(this.value)">
+      <option value="2p">2 PLAYERS</option>
+      <option value="myopic" selected>MYOPIC BOT</option>
+      <option value="minimax">MINIMAX BOT</option>
+    </select>
+  </div>
   <button class="mode-btn active" id="sound-btn" onclick="toggleSound()">♪ SOUND</button>
 </div>
 
@@ -213,6 +221,14 @@ let pendingSource = null, animating = false;
 let audioCtx = null;
 let soundOn = true;
 
+// Prewarm AudioContext on every pointer interaction so it's never suspended
+// when a sound actually needs to play.
+function ensureAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+document.addEventListener('pointerdown', ensureAudio, true);
+
 function toggleSound() {
   soundOn = !soundOn;
   const btn = document.getElementById('sound-btn');
@@ -221,8 +237,7 @@ function toggleSound() {
 }
 
 function getAudio() {
-  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  if (audioCtx.state === 'suspended') audioCtx.resume();
+  ensureAudio();
   return audioCtx;
 }
 
@@ -505,21 +520,79 @@ function commitToFloor() {
   if (!pendingSource || animating) return;
   const color = pendingSource.color;
   const src   = {...pendingSource};
-  pendingSource = null;
-  const pl = players[currentPlayer];
-  let srcTiles;
+
+  // Grab rects before any DOM changes
+  let srcRects = [], remainderRects = [];
   if (src.type === 'factory') {
-    srcTiles = factories[src.factoryIdx].filter(t => t === color);
-    center.push(...factories[src.factoryIdx].filter(t => t !== color));
+    const fEl = document.querySelectorAll('.factory')[src.factoryIdx];
+    if (fEl) fEl.querySelectorAll('.factory-tile').forEach(el => {
+      if (el.classList.contains('selected')) srcRects.push(el.getBoundingClientRect());
+      else remainderRects.push(el.getBoundingClientRect());
+    });
+  } else {
+    document.querySelectorAll('.center-tile').forEach(el => {
+      if (el.classList.contains('selected')) srcRects.push(el.getBoundingClientRect());
+    });
+  }
+  const boardEls  = document.querySelectorAll('.player-board');
+  const floorEl   = boardEls[currentPlayer] ? boardEls[currentPlayer].querySelector('.floor-section') : null;
+  const poolEl    = document.querySelector('.center-pool');
+  const floorRect = floorEl ? floorEl.getBoundingClientRect() : null;
+  const poolRect  = poolEl  ? poolEl.getBoundingClientRect()  : null;
+
+  // Target individual empty floor cells
+  const pl = players[currentPlayer];
+  const floorCellRects = floorEl
+    ? [...floorEl.querySelectorAll('.floor-tile:not(.filled)')].slice(0, srcRects.length).map(c => c.getBoundingClientRect())
+    : [];
+
+  // Compute tiles
+  const srcTiles   = src.type === 'factory' ? factories[src.factoryIdx].filter(t => t === color) : center.filter(t => t === color);
+  const remainTiles = src.type === 'factory' ? factories[src.factoryIdx].filter(t => t !== color) : [];
+
+  // Commit source state — remainder NOT added to center yet
+  pendingSource = null;
+  animating = true;
+  if (src.type === 'factory') {
     factories[src.factoryIdx] = [];
   } else {
-    srcTiles = center.filter(t => t === color);
-    center   = center.filter(t => t !== color);
+    center = center.filter(t => t !== color);
     if (centerHasFirstToken) { centerHasFirstToken = false; if (pl.floor.length < 7) pl.floor.push('first'); }
   }
-  for (const t of srcTiles) { if (pl.floor.length < 7) pl.floor.push(t); else discard.push(t); }
-  playFloor();
-  afterPlace();
+
+  render(); // show cleared source; floor still unchanged
+
+  const STAGGER = 150, LAND = 580;
+  const srcCount = srcRects.length, remCount = remainTiles.length;
+
+  const fillFloor = () => {
+    for (const t of srcTiles) { if (pl.floor.length < 7) pl.floor.push(t); else discard.push(t); }
+    playFloor();
+  };
+  const finish = () => { animating = false; afterPlace(); };
+
+  if (srcCount === 0 && remCount === 0) { fillFloor(); finish(); return; }
+
+  let srcLanded = 0, remLanded = 0;
+  const onSrcLand = () => {
+    if (++srcLanded === srcCount) { fillFloor(); render(); if (remCount === 0) finish(); }
+  };
+
+  if (srcCount === 0) { fillFloor(); render(); }
+
+  srcRects.forEach((rect, i) => {
+    const dest = i < floorCellRects.length ? floorCellRects[i] : floorRect;
+    if (dest) flyTile(rect, dest, color, i * STAGGER, onSrcLand);
+    else setTimeout(onSrcLand, i * STAGGER + LAND);
+  });
+
+  const remStart = srcCount * STAGGER + LAND;
+  remainTiles.forEach((tc, i) => {
+    const rect = remainderRects[i];
+    const onLand = () => { center.push(tc); playClick(); if (++remLanded === remCount) finish(); };
+    if (rect && poolRect) flyTile(rect, poolRect, tc, remStart + i * STAGGER, onLand);
+    else setTimeout(onLand, remStart + i * STAGGER + LAND);
+  });
 }
 
 function afterPlace() {
@@ -695,7 +768,7 @@ function renderSelectedInfo() {
   const count = pendingSource.type === 'factory'
     ? factories[pendingSource.factoryIdx].filter(t => t === pendingSource.color).length
     : center.filter(t => t === pendingSource.color).length;
-  el.innerHTML = `${dot(pendingSource.color,14,3)} ${count}× ${pendingSource.color} selected — click a highlighted row or FLOOR ALL`;
+  el.innerHTML = `${dot(pendingSource.color,14,3)} ${count}× ${pendingSource.color} selected — click a highlighted row or the floor`;
 }
 
 function renderTilingResults() {
@@ -720,11 +793,6 @@ function renderTilingResults() {
 function renderActions() {
   const el = document.getElementById('actions');
   el.innerHTML='';
-  if (phase==='draft' && pendingSource && !animating) {
-    const b=document.createElement('button');
-    b.className='btn danger'; b.textContent='FLOOR ALL'; b.onclick=commitToFloor;
-    el.appendChild(b);
-  }
   if (phase==='tiling-preview') {
     const b=document.createElement('button');
     b.className='btn'; b.textContent='SCORE →'; b.onclick=scoreNow;
@@ -881,6 +949,11 @@ function renderBoards() {
     // Floor
     const displayFloor = (phase==='tiling' && tilingLog) ? tilingLog[pIdx].floor : pl.floor;
     const floorSec=document.createElement('div'); floorSec.className='floor-section';
+    if (phase==='draft' && pendingSource && !animating && pIdx===currentPlayer) {
+      floorSec.classList.add('valid-target');
+      floorSec.onclick=commitToFloor;
+      floorSec.title='Send all selected tiles to the floor';
+    }
     const floorLine=document.createElement('div'); floorLine.className='floor-line';
     FLOOR_PENALTIES.forEach((pen,i)=>{
       const cell=document.createElement('div'); cell.className='floor-cell';
