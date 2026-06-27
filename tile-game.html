@@ -225,36 +225,25 @@ function getAudio() {
 function playClick() {
   if (!soundOn) return;
   const ctx = getAudio(), now = ctx.currentTime;
-  // Sharp impact transient — filtered noise burst (the "clack")
-  const clickLen = Math.floor(ctx.sampleRate * 0.007);
-  const clickBuf = ctx.createBuffer(1, clickLen, ctx.sampleRate);
-  const cd = clickBuf.getChannelData(0);
-  for (let i = 0; i < clickLen; i++) cd[i] = (Math.random()*2-1) * Math.pow(1 - i/clickLen, 2);
-  const clickSrc = ctx.createBufferSource(); clickSrc.buffer = clickBuf;
-  const clickBpf = ctx.createBiquadFilter(); clickBpf.type = 'bandpass'; clickBpf.frequency.value = 3200; clickBpf.Q.value = 0.6;
-  const clickGain = ctx.createGain(); clickGain.gain.value = 0.5;
-  clickSrc.connect(clickBpf); clickBpf.connect(clickGain); clickGain.connect(ctx.destination);
-  clickSrc.start(now); clickSrc.stop(now + 0.007);
-  // Woody resonance body — pitch drops fast like hollow wood
-  const osc = ctx.createOscillator(); osc.type = 'sine';
-  const freq = 260 + Math.random() * 80;
-  osc.frequency.setValueAtTime(freq, now);
-  osc.frequency.exponentialRampToValueAtTime(freq * 0.42, now + 0.055);
-  const bodyGain = ctx.createGain();
-  bodyGain.gain.setValueAtTime(0.26, now);
-  bodyGain.gain.exponentialRampToValueAtTime(0.001, now + 0.065);
-  osc.connect(bodyGain); bodyGain.connect(ctx.destination);
-  osc.start(now); osc.stop(now + 0.065);
-  // Mid-range knock — short bandpass noise (the "knock" of wood)
-  const knockLen = Math.floor(ctx.sampleRate * 0.022);
-  const knockBuf = ctx.createBuffer(1, knockLen, ctx.sampleRate);
-  const kd = knockBuf.getChannelData(0);
-  for (let i = 0; i < knockLen; i++) kd[i] = (Math.random()*2-1) * Math.pow(1 - i/knockLen, 1.4);
-  const knockSrc = ctx.createBufferSource(); knockSrc.buffer = knockBuf;
-  const knockBpf = ctx.createBiquadFilter(); knockBpf.type = 'bandpass'; knockBpf.frequency.value = 750; knockBpf.Q.value = 1.4;
-  const knockGain = ctx.createGain(); knockGain.gain.value = 0.3;
-  knockSrc.connect(knockBpf); knockBpf.connect(knockGain); knockGain.connect(ctx.destination);
-  knockSrc.start(now); knockSrc.stop(now + 0.022);
+  // 2–3 tiny high-frequency noise grains, like rice or small tiles rattling
+  const grains = 2 + (Math.random() < 0.4 ? 1 : 0);
+  for (let g = 0; g < grains; g++) {
+    const t = now + g * (0.005 + Math.random() * 0.005);
+    const dur = 0.007 + Math.random() * 0.007;
+    const len = Math.floor(ctx.sampleRate * dur);
+    const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+    const d   = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = (Math.random()*2-1) * Math.pow(1 - i/len, 2);
+    const src = ctx.createBufferSource(); src.buffer = buf;
+    // High-pass: cut everything below ~2.5 kHz for that bright, airy rattle
+    const hpf = ctx.createBiquadFilter();
+    hpf.type = 'highpass';
+    hpf.frequency.value = 2400 + Math.random() * 1800;
+    const gain = ctx.createGain();
+    gain.gain.value = 0.28 + Math.random() * 0.1;
+    src.connect(hpf); hpf.connect(gain); gain.connect(ctx.destination);
+    src.start(t); src.stop(t + dur);
+  }
 }
 
 function playFloor() {
@@ -551,7 +540,7 @@ function scoreNow() {
   let n = 0;
   players.forEach(pl => {
     pl.patternLines.forEach((line, row) => {
-      if (line.count === row+1 && line.color) { playChime(n * 0.2); n++; }
+      if (line.count === row+1 && line.color) { setTimeout(playClick, n * 160); n++; }
     });
   });
   doWallTiling();
@@ -911,57 +900,110 @@ function doAITurn() {
   const move = findBestMove();
   if (!move) { render(); return; }
 
-  // Step 1: highlight source tiles
-  aiMove = move;
-  aiAnimStep = 1;
+  // Briefly highlight the source tiles so the player can see what the bot is picking
+  aiMove = move; aiAnimStep = 1;
   render();
 
   setTimeout(() => {
-    // Step 2: highlight target row (skip if flooring all)
-    if (move.lineIdx !== -1) {
-      aiAnimStep = 2;
-      render();
-      setTimeout(() => { aiAnimStep = 0; aiMove = null; executeAIMove(move); }, 1300);
+    // Capture rects while ai-highlight class is still on the elements
+    let srcRects = [], remainderRects = [];
+    if (move.source === 'factory') {
+      const fEl = document.querySelectorAll('.factory')[move.factoryIdx];
+      if (fEl) fEl.querySelectorAll('.factory-tile').forEach(el => {
+        if (el.classList.contains('ai-highlight')) srcRects.push(el.getBoundingClientRect());
+        else remainderRects.push(el.getBoundingClientRect());
+      });
     } else {
-      aiAnimStep = 0; aiMove = null; executeAIMove(move);
+      document.querySelectorAll('.center-tile').forEach(el => {
+        if (el.classList.contains('ai-highlight')) srcRects.push(el.getBoundingClientRect());
+      });
     }
-  }, 1300);
+    const boardEls = document.querySelectorAll('.player-board');
+    const rowEl    = (move.lineIdx >= 0 && boardEls[1])
+                     ? boardEls[1].querySelectorAll('.pattern-row')[move.lineIdx] : null;
+    const poolEl   = document.querySelector('.center-pool');
+    const rowRect  = rowEl  ? rowEl.getBoundingClientRect()  : null;
+    const poolRect = poolEl ? poolEl.getBoundingClientRect() : null;
+
+    aiAnimStep = 0; aiMove = null;
+    executeAIMove(move, {srcRects, remainderRects, rowRect, poolRect});
+  }, 850);
 }
 
-function executeAIMove(move) {
+function executeAIMove(move, rects) {
+  const {srcRects = [], remainderRects = [], rowRect = null, poolRect = null} = rects || {};
   const ai = players[1];
-  let tiles;
+
+  // Commit source state
+  const remainTiles = move.source === 'factory'
+    ? factories[move.factoryIdx].filter(t => t !== move.color) : [];
+  let srcTiles;
   if (move.source === 'factory') {
-    tiles = factories[move.factoryIdx].filter(t => t === move.color);
-    center.push(...factories[move.factoryIdx].filter(t => t !== move.color));
+    srcTiles = factories[move.factoryIdx].filter(t => t === move.color);
+    center.push(...remainTiles);
     factories[move.factoryIdx] = [];
   } else {
-    tiles = center.filter(t => t === move.color);
+    srcTiles = center.filter(t => t === move.color);
     center = center.filter(t => t !== move.color);
     if (centerHasFirstToken) {
       centerHasFirstToken = false;
       if (ai.floor.length < 7) ai.floor.push('first');
     }
   }
+
+  // Floor-all case: no row animation
   if (move.lineIdx === -1) {
-    for (const t of tiles) {
-      if (ai.floor.length < 7) ai.floor.push(t); else discard.push(t);
-    }
+    for (const t of srcTiles) { if (ai.floor.length < 7) ai.floor.push(t); else discard.push(t); }
     playFloor();
-  } else {
-    const line = ai.patternLines[move.lineIdx];
-    const space = (move.lineIdx + 1) - line.count;
-    const toPlace = Math.min(tiles.length, space);
-    line.color = move.color;
-    line.count += toPlace;
-    const overflow = tiles.length - toPlace;
-    for (let i = toPlace; i < tiles.length; i++) {
-      if (ai.floor.length < 7) ai.floor.push(move.color); else discard.push(move.color);
-    }
-    playClick();
-    if (overflow > 0) setTimeout(playFloor, 90);
+    afterPlace();
+    return;
   }
-  afterPlace();
+
+  const line    = ai.patternLines[move.lineIdx];
+  const space   = (move.lineIdx + 1) - line.count;
+  const toPlace = Math.min(srcTiles.length, space);
+  const overflow = srcTiles.length - toPlace;
+
+  animating = true;
+  render(); // show cleared source, row still unfilled
+
+  const STAGGER  = 150;
+  const LAND     = 580;
+  const srcCount = srcRects.length;
+  const remCount = remainTiles.length;
+
+  const fillRow = () => {
+    line.color = move.color; line.count += toPlace;
+    for (let i = 0; i < overflow; i++) { if (ai.floor.length < 7) ai.floor.push(move.color); else discard.push(move.color); }
+    if (overflow > 0) playFloor();
+  };
+  const finish = () => { animating = false; afterPlace(); };
+
+  if (srcCount === 0 && remCount === 0) { playClick(); fillRow(); finish(); return; }
+
+  let srcLanded = 0, remLanded = 0;
+  const onSrcLand = () => {
+    playClick();
+    if (++srcLanded === srcCount) { fillRow(); render(); if (remCount === 0) finish(); }
+  };
+  const onRemLand = () => {
+    playClick();
+    if (++remLanded === remCount) finish();
+  };
+
+  if (srcCount === 0) { fillRow(); render(); }
+
+  srcRects.forEach((rect, i) => {
+    if (rowRect) flyTile(rect, rowRect, move.color, i * STAGGER, onSrcLand);
+    else setTimeout(onSrcLand, i * STAGGER + LAND);
+  });
+
+  const remStart = srcCount * STAGGER + LAND;
+  remainTiles.forEach((tc, i) => {
+    const rect = remainderRects[i];
+    if (rect && poolRect) flyTile(rect, poolRect, tc, remStart + i * STAGGER, onRemLand);
+    else setTimeout(onRemLand, remStart + i * STAGGER + LAND);
+  });
 }
 
 // Collect all available pick candidates from current supply
