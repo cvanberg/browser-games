@@ -7,11 +7,11 @@
 const fs = require('fs');
 
 const BOTS = [
-  { file: 'bots/bot_04000.json', id: 'rangi',  name: 'Rangi',  title: 'The Bridge Builder',  desc: 'Methodical but naive — lays bridges everywhere, phase-blind.' },
-  { file: 'bots/bot_08000.json', id: 'nalu',   name: 'Nalu',   title: 'The Settler',          desc: 'Patient and hub-hungry. Flows toward high-degree islands, rarely removes.' },
-  { file: 'bots/bot_12000.json', id: 'koa',    name: 'Koa',    title: 'The Warrior',          desc: 'Aggressive. Removes bridges, targets hubs, exploits a lead ruthlessly.' },
-  { file: 'bots/bot_16000.json', id: 'hiku',   name: 'Hiku',   title: 'The Specialist',       desc: 'Hyper-focused on Phase 1. Locks down hub islands before you know it.' },
-  { file: 'bots/bot_20000.json', id: 'mano',   name: 'Mano',   title: 'The Shark',            desc: 'Endgame predator. Targets what you own, knows how to fight from behind.' },
+  { file: 'bots/bot_020000.json', id: 'rangi',  name: 'Rangi',  title: 'The Bridge Builder',  desc: 'Methodical but naive — lays bridges everywhere, phase-blind.' },
+  { file: 'bots/bot_040000.json', id: 'nalu',   name: 'Nalu',   title: 'The Settler',          desc: 'Patient and hub-hungry. Flows toward high-degree islands, rarely removes.' },
+  { file: 'bots/bot_060000.json', id: 'koa',    name: 'Koa',    title: 'The Warrior',          desc: 'Aggressive. Removes bridges, targets hubs, exploits a lead ruthlessly.' },
+  { file: 'bots/bot_080000.json', id: 'hiku',   name: 'Hiku',   title: 'The Specialist',       desc: 'Hyper-focused on Phase 1. Locks down hub islands before you know it.' },
+  { file: 'bots/bot_100000.json', id: 'mano',   name: 'Mano',   title: 'The Shark',            desc: 'Endgame predator. Targets what you own, knows how to fight from behind.' },
 ];
 
 const TOP_N = 80; // classifiers per bot to embed

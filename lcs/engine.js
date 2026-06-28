@@ -1,5 +1,11 @@
 // Kahuna game engine — headless, synchronous, no DOM
 // Mirrors the logic in kahuna/kahuna.html exactly.
+//
+// Turn structure (matching the real game and browser):
+//   Play phase: player may play any number of cards (place or remove).
+//   Draw phase: player draws one card (or passes), ending the turn.
+//   legalMoves() always returns both play moves AND draw moves so the
+//   training loop can decide when to stop playing and draw.
 
 'use strict';
 
@@ -27,7 +33,7 @@ function createGame() {
     deck: [], market: [], hands: [[], []], bridges: [],
     controlled: [], scores: [0, 0], discard: [],
     curP: 0, subphase: 'play', gamePhase: 1,
-    hasPlayed: false, lastPassedDraw: false, turnNoMoves: false,
+    hasPlayed: false, lastPassedDraw: false,
 
     init() {
       const full = [];
@@ -45,7 +51,6 @@ function createGame() {
       this.gamePhase = 1;
       this.hasPlayed = false;
       this.lastPassedDraw = false;
-      this.turnNoMoves = !this._hasValidMove();
     },
 
     isOver() { return this.subphase === 'over'; },
@@ -54,38 +59,29 @@ function createGame() {
       if (!this.isOver()) return -1;
       if (this.scores[0] > this.scores[1]) return 0;
       if (this.scores[1] > this.scores[0]) return 1;
-      // tiebreak: island count
       const ic = [0, 0];
       this.controlled.forEach(c => { if (c === 0) ic[0]++; else if (c === 1) ic[1]++; });
       if (ic[0] > ic[1]) return 0;
       if (ic[1] > ic[0]) return 1;
-      return -1; // true tie
+      return -1;
     },
 
-    // Returns all legal moves for current player in current subphase.
-    // Move shapes:
-    //   { type:'place',  handIdx, ci }
-    //   { type:'remove', h1, h2, ci }
-    //   { type:'draw',   src }        src = 'deck' | 0 | 1 | 2
-    //   { type:'pass-draw' }
+    // Returns all legal moves for the current player.
+    // During a turn the player may play any number of cards, then must draw.
+    // All of: place, remove, draw, pass-draw are returned together so the
+    // caller can decide when to switch from playing to drawing.
     legalMoves() {
       if (this.isOver()) return [];
-      if (this.subphase === 'play') return this._legalPlayMoves();
-      if (this.subphase === 'draw') return this._legalDrawMoves();
-      return [];
-    },
-
-    _legalPlayMoves() {
-      const moves = [];
       const p = this.curP;
-      // place
+      const moves = [];
+
+      // ---- Play moves ----
       this.hands[p].forEach((isl, hi) => {
         CONNS.forEach(([a, b], ci) => {
           if ((a === isl || b === isl) && this.bridges[ci] === null)
             moves.push({ type: 'place', handIdx: hi, ci });
         });
       });
-      // remove
       for (let i = 0; i < this.hands[p].length; i++) {
         for (let j = i + 1; j < this.hands[p].length; j++) {
           const i1 = this.hands[p][i], i2 = this.hands[p][j];
@@ -96,34 +92,38 @@ function createGame() {
           });
         }
       }
-      return moves;
-    },
 
-    _legalDrawMoves() {
-      const moves = [];
-      const p = this.curP;
+      // ---- Draw moves (these end the turn) ----
       if (this.hands[p].length < 5) {
-        if (this.deck.length > 0) moves.push({ type: 'draw', src: 'deck' });
-        this.market.forEach((_, mi) => moves.push({ type: 'draw', src: mi }));
+        if (this.deck.length > 0)
+          moves.push({ type: 'draw', src: 'deck' });
+        this.market.forEach((_, mi) =>
+          moves.push({ type: 'draw', src: mi }));
       }
-      if (moves.length === 0 || this.lastPassedDraw)
+      if (this.deck.length === 0 && this.market.length === 0)
         moves.push({ type: 'pass-draw' });
+      else if (this.lastPassedDraw)
+        moves.push({ type: 'pass-draw' });
+
       return moves;
     },
 
-    // Apply a move. Returns true on success.
+    // Convenience: just the play moves (place + remove)
+    playMoves() {
+      return this.legalMoves().filter(m => m.type === 'place' || m.type === 'remove');
+    },
+
+    // Convenience: just the draw moves
+    drawMoves() {
+      return this.legalMoves().filter(m => m.type === 'draw' || m.type === 'pass-draw');
+    },
+
     applyMove(move) {
       if (this.isOver()) return false;
-      if (this.subphase === 'play') {
-        if (move.type === 'place') return this._applyPlace(move.handIdx, move.ci);
-        if (move.type === 'remove') return this._applyRemove(move.h1, move.h2, move.ci);
-        return false;
-      }
-      if (this.subphase === 'draw') {
-        if (move.type === 'draw') return this._applyDraw(move.src);
-        if (move.type === 'pass-draw') { this._endTurn(true); return true; }
-        return false;
-      }
+      if (move.type === 'place')     return this._applyPlace(move.handIdx, move.ci);
+      if (move.type === 'remove')    return this._applyRemove(move.h1, move.h2, move.ci);
+      if (move.type === 'draw')      return this._applyDraw(move.src);
+      if (move.type === 'pass-draw') { this._endTurn(true); return true; }
       return false;
     },
 
@@ -135,7 +135,7 @@ function createGame() {
       this.bridges[ci] = p;
       this._resolveAll();
       this.hasPlayed = true;
-      this.subphase = 'draw';
+      // Turn does NOT end here — player may play more cards.
       return true;
     },
 
@@ -151,7 +151,7 @@ function createGame() {
       this.bridges[ci] = null;
       this._resolveAll();
       this.hasPlayed = true;
-      this.subphase = 'draw';
+      // Turn does NOT end here — player may play more cards.
       return true;
     },
 
@@ -237,29 +237,6 @@ function createGame() {
       this.curP = 1 - this.curP;
       this.subphase = 'play';
       this.hasPlayed = false;
-      this.turnNoMoves = !this._hasValidMove();
-    },
-
-    _hasValidMove() {
-      const p = this.curP;
-      for (let h = 0; h < this.hands[p].length; h++) {
-        const isl = this.hands[p][h];
-        for (let ci = 0; ci < CONNS.length; ci++) {
-          const [a, b] = CONNS[ci];
-          if ((a === isl || b === isl) && this.bridges[ci] === null) return true;
-        }
-      }
-      for (let i = 0; i < this.hands[p].length; i++) {
-        for (let j = i + 1; j < this.hands[p].length; j++) {
-          const i1 = this.hands[p][i], i2 = this.hands[p][j];
-          for (let ci = 0; ci < CONNS.length; ci++) {
-            const [a, b] = CONNS[ci];
-            if (this.bridges[ci] === 1 - p &&
-                (i1 === a || i1 === b) && (i2 === a || i2 === b)) return true;
-          }
-        }
-      }
-      return false;
     },
   };
 
