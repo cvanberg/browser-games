@@ -1,0 +1,1562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kahuna</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:#111;font-family:'Georgia',serif}
+body{display:flex;flex-direction:column}
+#right-panel{
+  width:240px;flex-shrink:0;display:flex;flex-direction:column;
+  background:rgba(4,8,4,0.92);border-left:1px solid #1a2a1a;
+}
+#info-panel{
+  flex-shrink:0;padding:10px 10px 8px;border-bottom:1px solid #1a2a1a;
+  font-family:'Segoe UI',sans-serif;
+}
+#scores-row{display:flex;gap:6px;margin-bottom:8px;}
+.player-score{flex:1;display:flex;flex-direction:column;gap:1px;}
+.pn{font-size:0.6rem;letter-spacing:2px;}
+.pn.you{color:#c8a84a;}.pn.bot{color:#1ab0cc;}
+.pts{font-size:1.7rem;font-weight:900;line-height:1.1;}
+.pts.you{color:#c8a84a;}.pts.bot{color:#1ab0cc;}
+.isl{font-size:0.6rem;color:#3a5a3a;}
+.phase-tag{font-size:0.6rem;color:#3a5a3a;text-align:right;align-self:flex-end;letter-spacing:1px;}
+#tb-status{font-size:0.78rem;font-weight:600;color:#a0b890;margin-bottom:6px;line-height:1.4;}
+#tb-actions{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:7px;}
+.act-btn{
+  background:transparent;border:1px solid #3a4a30;color:#7a9a60;
+  border-radius:5px;padding:3px 8px;font-size:0.68rem;cursor:pointer;
+  font-family:'Segoe UI',sans-serif;letter-spacing:1px;white-space:nowrap;
+}
+.act-btn:hover:not(:disabled){border-color:#f0c060;color:#f0c060}
+.act-btn:disabled{opacity:0.3;cursor:default}
+.act-btn.danger{border-color:#5a2020;color:#c06060}
+.act-btn.danger:hover:not(:disabled){border-color:#ff6060;color:#ff9090}
+.tb-btn{
+  background:transparent;border:1px solid #2a4a30;color:#5a8a60;
+  border-radius:6px;padding:4px 10px;font-size:0.7rem;cursor:pointer;
+  font-family:'Segoe UI',sans-serif;letter-spacing:1px;width:100%;
+}
+.tb-btn:hover{border-color:#f0c060;color:#f0c060}
+#scoring-banner{
+  position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:200;
+  background:rgba(8,16,8,0.97);border:2px solid #c8860a;border-radius:10px;
+  padding:12px 28px;display:none;text-align:center;
+  font-size:0.85rem;font-family:'Segoe UI',sans-serif;
+  box-shadow:0 0 40px rgba(200,134,10,0.5);color:#e8d5a3;min-width:300px;
+}
+#scoring-banner h3{color:#f0c060;font-size:0.72rem;letter-spacing:2px;margin-bottom:6px}
+#scoring-banner p{font-size:0.82rem;line-height:1.6}
+#game-area{flex:1;display:flex;min-height:0;}
+#game-svg{flex:1;min-height:0;min-width:0;display:block;}
+#log-label{
+  padding:4px 10px 2px;font-size:0.58rem;letter-spacing:2px;
+  color:#2a4a2a;font-family:'Segoe UI',sans-serif;border-bottom:1px solid #111;
+  flex-shrink:0;
+}
+#game-log{
+  flex:1;overflow-y:auto;overflow-x:hidden;
+  padding:4px 8px;display:flex;flex-direction:column;
+}
+.log-entry{
+  padding:3px 2px;
+  border-bottom:1px solid rgba(255,255,255,0.04);
+  line-height:1.5;font-size:0.76rem;
+  color:#445544;word-break:break-word;flex-shrink:0;
+  font-family:'Segoe UI',sans-serif;
+}
+.ly{color:#c8a84a;}.lb{color:#1ab0cc;}
+.lc{color:#50c870;font-weight:700;}
+.ls{color:#d4a830;font-style:italic;}
+.lp{color:#3a5a3a;font-style:italic;text-align:center;}
+.lx{color:#334433;}
+</style>
+</head>
+<body>
+<div id="scoring-banner"><h3></h3><p></p></div>
+<div id="game-area">
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg id="game-svg"
+   width="259.29166mm"
+   height="207.08057mm"
+   viewBox="-62 -68 375 348"
+   version="1.1"
+   xml:space="preserve"
+   sodipodi:docname="kahuna-board.svg"
+   inkscape:version="1.3.2 (091e20e, 2023-11-25)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"><sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     inkscape:zoom="0.51782592"
+     inkscape:cx="266.49883"
+     inkscape:cy="391.05806"
+     inkscape:window-width="1440"
+     inkscape:window-height="842"
+     inkscape:window-x="41"
+     inkscape:window-y="30"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="layer1" /><defs
+     id="defs1" /><g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(24.563202,-44.959717)"><image
+       width="373.04196"
+       height="344.83435"
+       preserveAspectRatio="none"
+       xlink:href="background.jpeg"
+       id="table-top"
+       x="-83.267021"
+       y="-22.827007"
+       inkscape:svg-dpi="1" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+       d="m -54.0816,267.21156 c -0.22041,0.44083 17.19239,-1.10207 17.19239,-1.10207"
+       id="my-unused-bridge-4" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+       d="m -46.67326,312.36091 c -0.22042,0.44083 17.19238,-1.10207 17.19238,-1.10207"
+       id="my-unused-bridge-12" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+       d="m -76.70012,270.05018 c -0.22041,0.44083 17.19239,-1.10207 17.19239,-1.10207"
+       id="my-unused-bridge-1" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+       d="m -50.32368,284.73316 c -0.27996,-0.40563 -7.32301,15.59379 -7.32301,15.59379"
+       id="my-unused-bridge-17" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+       d="m -72.53635,299.90302 c -0.40922,0.27467 15.49758,7.52448 15.49758,7.52448"
+       id="my-unused-bridge-15" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+       d="m -59.06103,257.76165 c -0.38186,0.31159 16.13106,6.04829 16.13106,6.04829"
+       id="my-unused-bridge-3" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+       d="m -30.18045,263.31546 c -0.27885,-0.4064 -7.3657,15.57367 -7.3657,15.57367"
+       id="my-unused-bridge-6" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+       d="m -12.04662,290.59601 c -0.49013,-0.0518 7.0607301,15.71428 7.0607301,15.71428"
+       id="my-unused-bridge-10" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+       d="m -22.88976,267.37397 c -0.49182,0.032 9.62397,14.28888 9.62397,14.28888"
+       id="my-unused-bridge-7" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+       d="m -43.43761,301.06564 c 0.10361,0.48185 12.72828,-11.60963 12.72828,-11.60963"
+       id="my-unused-bridge-19" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+       d="m -24.67485,300.02055 c 0.22069,0.4407 9.42489,-14.42096 9.42489,-14.42096"
+       id="my-unused-bridge-20" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+       d="m -50.92863,299.48093 c 0.34563,0.35136 4.52801,-16.62196 4.52801,-16.62196"
+       id="my-unused-bridge-18" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+       d="m -35.57642,286.9072 c 0.0724,0.48751 13.44828,-10.76737 13.44828,-10.76737"
+       id="my-unused-bridge-9" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+       d="m -50.45343,281.34627 c 0.1632,0.46506 11.17252,-13.11364 11.17252,-13.11364"
+       id="my-unused-bridge-21" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+       d="m -61.45772,289.45021 c 0.31066,0.38263 6.08777,-16.11619 6.08777,-16.11619"
+       id="my-unused-bridge-22" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+       d="m -11.02591,269.883 c -0.48932,-0.0589 6.8317301,15.81519 6.8317301,15.81519"
+       id="my-unused-bridge-8" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+       d="m -67.48225,280.16142 c 0.0827,0.48588 13.21856,-11.04817 13.21856,-11.04817"
+       id="my-unused-bridge-23" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+       d="m -74.18447,274.43141 c -0.42674,-0.2466 0.0632,17.22755 0.0632,17.22755"
+       id="my-unused-bridge-25" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+       d="m -51.47342,309.05473 c -0.057,0.48956 15.78805,-6.89418 15.78805,-6.89418"
+       id="my-unused-bridge-13" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+       d="m -22.16658,307.80602 c -0.36323,0.33313 16.4534901,5.10641 16.4534901,5.10641"
+       id="my-unused-bridge-11" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+       d="m -71.18253,294.49299 c -0.44691,0.20781 14.14158,9.83912 14.14158,9.83912"
+       id="my-unused-bridge-16" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+       d="m -29.66291,306.11886 c -0.22042,0.49833 17.19238,-5.58699 17.19238,-5.58699"
+       id="my-unused-bridge-24" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+       d="m -78.88643,299.48237 c -0.22041,0.29709 17.19238,10.11024 17.19238,10.11024"
+       id="my-unused-bridge-14" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+       d="m -75.50614,265.27178 c -0.22042,0.44083 17.19238,-1.10207 17.19238,-1.10207"
+       id="my-unused-bridge-2" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+       d="m -22.19135,260.91939 c -0.3465,0.35049 16.6834901,4.29579 16.6834901,4.29579"
+       id="my-unused-bridge-5" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+       d="m 227.8102,-7.989878 c -0.22041,0.44083 17.19239,-1.10207 17.19239,-1.10207"
+       id="opponent-unused-bridge-4" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+       d="m 235.21854,37.159472 c -0.22042,0.44083 17.19238,-1.10207 17.19238,-1.10207"
+       id="opponent-unused-bridge-12" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+       d="m 205.19168,-5.151258 c -0.22041,0.44083 17.19239,-1.10207 17.19239,-1.10207"
+       id="opponent-unused-bridge-1" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+       d="m 231.56812,9.531722 c -0.27996,-0.40563 -7.32301,15.59379 -7.32301,15.59379"
+       id="opponent-unused-bridge-17" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+       d="m 209.35545,24.701582 c -0.40922,0.27467 15.49758,7.52448 15.49758,7.52448"
+       id="opponent-unused-bridge-15" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+       d="m 222.83077,-17.439788 c -0.38186,0.31159 16.13106,6.04829 16.13106,6.04829"
+       id="opponent-unused-bridge-3" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+       d="m 251.71135,-11.885978 c -0.27885,-0.4064 -7.3657,15.57367 -7.3657,15.57367"
+       id="opponent-unused-bridge-6" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+       d="m 269.84518,15.394572 c -0.49013,-0.0518 7.06073,15.71428 7.06073,15.71428"
+       id="opponent-unused-bridge-10" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+       d="m 259.00204,-7.827468 c -0.49182,0.032 9.62397,14.28888 9.62397,14.28888"
+       id="opponent-unused-bridge-7" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+       d="m 238.45419,25.864202 c 0.10361,0.48185 12.72828,-11.60963 12.72828,-11.60963"
+       id="opponent-unused-bridge-19" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+       d="m 257.21695,24.819112 c 0.22069,0.4407 9.42489,-14.42096 9.42489,-14.42096"
+       id="opponent-unused-bridge-20" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+       d="m 230.96317,24.279492 c 0.34563,0.35136 4.52801,-16.62196 4.52801,-16.62196"
+       id="opponent-unused-bridge-18" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+       d="m 246.31538,11.705762 c 0.0724,0.48751 13.44828,-10.76737 13.44828,-10.76737"
+       id="opponent-unused-bridge-9" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+       d="m 231.43837,6.144832 c 0.1632,0.46506 11.17252,-13.11364 11.17252,-13.11364"
+       id="opponent-unused-bridge-21" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+       d="m 220.43408,14.248772 c 0.31066,0.38263 6.08777,-16.11619 6.08777,-16.11619"
+       id="opponent-unused-bridge-22" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+       d="m 270.86589,-5.318438 c -0.48932,-0.0589 6.83173,15.81519 6.83173,15.81519"
+       id="opponent-unused-bridge-8" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+       d="m 214.40955,4.959982 c 0.0827,0.48588 13.21856,-11.04817 13.21856,-11.04817"
+       id="opponent-unused-bridge-23" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+       d="m 207.70733,-0.770028 c -0.42674,-0.2466 0.0632,17.22755 0.0632,17.22755"
+       id="opponent-unused-bridge-25" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+       d="m 230.41838,33.853292 c -0.057,0.48956 15.78805,-6.89418 15.78805,-6.89418"
+       id="opponent-unused-bridge-13" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+       d="m 259.72522,32.604582 c -0.36323,0.33313 16.45349,5.10641 16.45349,5.10641"
+       id="opponent-unused-bridge-11" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+       d="m 210.70927,19.291552 c -0.44691,0.20781 14.14158,9.83912 14.14158,9.83912"
+       id="opponent-unused-bridge-16" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+       d="m 252.22889,30.917422 c -0.22042,0.49833 17.19238,-5.58699 17.19238,-5.58699"
+       id="opponent-unused-bridge-24" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+       d="m 203.00537,24.280932 c -0.22041,0.29709 17.19238,10.11024 17.19238,10.11024"
+       id="opponent-unused-bridge-14" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+       d="m 206.38566,-9.929658 c -0.22042,0.44083 17.19238,-1.10207 17.19238,-1.10207"
+       id="opponent-unused-bridge-2" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+       d="m 259.70045,-14.282048 c -0.3465,0.35049 16.68349,4.29579 16.68349,4.29579"
+       id="opponent-unused-bridge-5" /><ellipse
+       style="display:none;opacity:0.782222;fill:#141500;fill-opacity:0.992095;stroke:none;stroke-width:2.56976;stroke-dasharray:none;stroke-opacity:1"
+       id="opponent-stone-10"
+       cx="-38.938728"
+       cy="2.8533566"
+       rx="4.4250212"
+       ry="4.3312731" /><ellipse
+       style="display:none;opacity:0.782222;fill:#141500;fill-opacity:0.992095;stroke:none;stroke-width:2.56976;stroke-dasharray:none;stroke-opacity:1"
+       id="opponent-stone-9"
+       cx="-43.171379"
+       cy="-6.2742677"
+       rx="4.4250212"
+       ry="4.3312731" /><ellipse
+       style="display:none;opacity:0.782222;fill:#141500;fill-opacity:0.992095;stroke:none;stroke-width:2.56976;stroke-dasharray:none;stroke-opacity:1"
+       id="opponent-stone-8"
+       cx="-34.498726"
+       cy="11.479943"
+       rx="4.4250212"
+       ry="4.3312731" /><ellipse
+       style="display:none;opacity:0.782222;fill:#141500;fill-opacity:0.992095;stroke:none;stroke-width:2.56976;stroke-dasharray:none;stroke-opacity:1"
+       id="opponent-stone-7"
+       cx="-46.875542"
+       cy="9.6007318"
+       rx="4.4250212"
+       ry="4.3312731" /><ellipse
+       style="display:none;opacity:0.782222;fill:#141500;fill-opacity:0.992095;stroke:none;stroke-width:2.56976;stroke-dasharray:none;stroke-opacity:1"
+       id="opponent-stone-6"
+       cx="-28.090126"
+       cy="0.075737938"
+       rx="4.4250212"
+       ry="4.3312731" /><ellipse
+       style="display:none;opacity:0.782222;fill:#141500;fill-opacity:0.992095;stroke:none;stroke-width:2.56976;stroke-dasharray:none;stroke-opacity:1"
+       id="opponent-stone-5"
+       cx="-57.723457"
+       cy="7.7486506"
+       rx="4.4250212"
+       ry="4.3312731" /><ellipse
+       style="display:none;opacity:0.782222;fill:#141500;fill-opacity:0.992095;stroke:none;stroke-width:2.56976;stroke-dasharray:none;stroke-opacity:1"
+       id="opponent-stone-4"
+       cx="-37.725212"
+       cy="20.132593"
+       rx="4.4250212"
+       ry="4.3312731" /><ellipse
+       style="display:none;opacity:0.782222;fill:#141500;fill-opacity:0.992095;stroke:none;stroke-width:2.56976;stroke-dasharray:none;stroke-opacity:1"
+       id="opponent-stone-3"
+       cx="-50.315117"
+       cy="19.390314"
+       rx="4.4250212"
+       ry="4.3312731" /><ellipse
+       style="display:none;opacity:0.782222;fill:#141500;fill-opacity:0.992095;stroke:none;stroke-width:2.56976;stroke-dasharray:none;stroke-opacity:1"
+       id="opponent-stone-2"
+       cx="-61.681892"
+       cy="18.589685"
+       rx="4.4250212"
+       ry="4.3312731" /><ellipse
+       style="display:none;opacity:0.782222;fill:#141500;fill-opacity:0.992095;stroke:none;stroke-width:2.56976;stroke-dasharray:none;stroke-opacity:1"
+       id="opponent-stone-1"
+       cx="-52.303352"
+       cy="-2.6866822"
+       rx="4.4250212"
+       ry="4.3312731" /><ellipse
+       style="display:none;opacity:0.782222;fill:#141500;fill-opacity:0.992095;stroke:none;stroke-width:2.56976;stroke-dasharray:none;stroke-opacity:1"
+       id="my-stone-10"
+       cx="220.1028"
+       cy="276.96445"
+       rx="4.4250212"
+       ry="4.3312731" /><ellipse
+       style="display:none;opacity:0.782222;fill:#141500;fill-opacity:0.992095;stroke:none;stroke-width:2.56976;stroke-dasharray:none;stroke-opacity:1"
+       id="my-stone-9"
+       cx="215.87015"
+       cy="267.83682"
+       rx="4.4250212"
+       ry="4.3312731" /><ellipse
+       style="display:none;opacity:0.782222;fill:#141500;fill-opacity:0.992095;stroke:none;stroke-width:2.56976;stroke-dasharray:none;stroke-opacity:1"
+       id="my-stone-8"
+       cx="224.5428"
+       cy="285.59103"
+       rx="4.4250212"
+       ry="4.3312731" /><ellipse
+       style="display:none;opacity:0.782222;fill:#141500;fill-opacity:0.992095;stroke:none;stroke-width:2.56976;stroke-dasharray:none;stroke-opacity:1"
+       id="my-stone-7"
+       cx="212.16599"
+       cy="283.71182"
+       rx="4.4250212"
+       ry="4.3312731" /><ellipse
+       style="display:none;opacity:0.782222;fill:#141500;fill-opacity:0.992095;stroke:none;stroke-width:2.56976;stroke-dasharray:none;stroke-opacity:1"
+       id="my-stone-6"
+       cx="230.9514"
+       cy="274.18683"
+       rx="4.4250212"
+       ry="4.3312731" /><ellipse
+       style="display:none;opacity:0.782222;fill:#141500;fill-opacity:0.992095;stroke:none;stroke-width:2.56976;stroke-dasharray:none;stroke-opacity:1"
+       id="my-stone-5"
+       cx="201.31807"
+       cy="281.85974"
+       rx="4.4250212"
+       ry="4.3312731" /><ellipse
+       style="display:none;opacity:0.782222;fill:#141500;fill-opacity:0.992095;stroke:none;stroke-width:2.56976;stroke-dasharray:none;stroke-opacity:1"
+       id="my-stone-4"
+       cx="221.31631"
+       cy="294.24368"
+       rx="4.4250212"
+       ry="4.3312731" /><ellipse
+       style="display:none;opacity:0.782222;fill:#141500;fill-opacity:0.992095;stroke:none;stroke-width:2.56976;stroke-dasharray:none;stroke-opacity:1"
+       id="my-stone-3"
+       cx="208.72641"
+       cy="293.5014"
+       rx="4.4250212"
+       ry="4.3312731" /><ellipse
+       style="display:none;opacity:0.782222;fill:#141500;fill-opacity:0.992095;stroke:none;stroke-width:2.56976;stroke-dasharray:none;stroke-opacity:1"
+       id="my-stone-2"
+       cx="197.35963"
+       cy="292.70078"
+       rx="4.4250212"
+       ry="4.3312731" /><ellipse
+       style="display:none;opacity:0.782222;fill:#141500;fill-opacity:0.992095;stroke:none;stroke-width:2.56976;stroke-dasharray:none;stroke-opacity:1"
+       id="my-stone-1"
+       cx="206.73817"
+       cy="271.42441"
+       rx="4.4250212"
+       ry="4.3312731" /><image
+       width="259.29166"
+       height="207.08057"
+       preserveAspectRatio="none"
+       xlink:href="kahuna-board.jpg"
+       id="game-board"
+       x="-24.563202"
+       y="44.959717"
+       style="stroke:#e30000;stroke-width:2;stroke-dasharray:none;stroke-opacity:1"
+       inkscape:svg-dpi="1" /><ellipse
+       style="display:none;opacity:0.782222;fill:#141500;fill-opacity:0.992095;stroke:none;stroke-width:2.56976;stroke-dasharray:none;stroke-opacity:1"
+       id="stone-aloa"
+       cx="184.91389"
+       cy="200.10349"
+       rx="4.4250212"
+       ry="4.3312731" /><ellipse
+       style="display:none;opacity:0.782222;fill:#141500;fill-opacity:0.992095;stroke:none;stroke-width:2.56976;stroke-dasharray:none;stroke-opacity:1"
+       id="stone-bari"
+       cx="108.59143"
+       cy="185.37378"
+       rx="4.4250212"
+       ry="4.3312731" /><ellipse
+       style="display:none;opacity:0.782222;fill:#141500;fill-opacity:0.992095;stroke:none;stroke-width:2.56976;stroke-dasharray:none;stroke-opacity:1"
+       id="stone-duda"
+       cx="164.54099"
+       cy="159.09308"
+       rx="4.4250212"
+       ry="4.3312731" /><ellipse
+       style="display:none;opacity:0.782222;fill:#141500;fill-opacity:0.992095;stroke:none;stroke-width:2.56976;stroke-dasharray:none;stroke-opacity:1"
+       id="stone-huna"
+       cx="171.59779"
+       cy="121.15108"
+       rx="4.4250212"
+       ry="4.3312731" /><ellipse
+       style="display:none;opacity:0.782222;fill:#141500;fill-opacity:0.992095;stroke:none;stroke-width:2.56976;stroke-dasharray:none;stroke-opacity:1"
+       id="stone-elai"
+       cx="123.69605"
+       cy="145.52827"
+       rx="4.4250212"
+       ry="4.3312731" /><ellipse
+       style="display:none;opacity:0.782222;fill:#141500;fill-opacity:0.992095;stroke:none;stroke-width:2.56976;stroke-dasharray:none;stroke-opacity:1"
+       id="stone-jojo"
+       cx="59.378925"
+       cy="122.50952"
+       rx="4.4250212"
+       ry="4.3312731" /><ellipse
+       style="display:none;opacity:0.782222;fill:#141500;fill-opacity:0.992095;stroke:none;stroke-width:2.56976;stroke-dasharray:none;stroke-opacity:1"
+       id="stone-faaa"
+       cx="49.379921"
+       cy="156.30513"
+       rx="4.4250212"
+       ry="4.3312731" /><ellipse
+       style="display:none;opacity:0.782222;fill:#141500;fill-opacity:0.992095;stroke:none;stroke-width:2.56976;stroke-dasharray:none;stroke-opacity:1"
+       id="stone-gola"
+       cx="22.459736"
+       cy="134.48682"
+       rx="4.4250212"
+       ry="4.3312731" /><ellipse
+       style="display:none;opacity:0.782222;fill:#141500;fill-opacity:0.992095;stroke:none;stroke-width:2.56976;stroke-dasharray:none;stroke-opacity:1"
+       id="stone-coco"
+       cx="14.036071"
+       cy="178.1627"
+       rx="4.4250212"
+       ry="4.3312731" /><ellipse
+       style="display:none;opacity:0.782222;fill:#141500;fill-opacity:0.992095;stroke:none;stroke-width:2.56976;stroke-dasharray:none;stroke-opacity:1"
+       id="stone-iffi"
+       cx="96.740334"
+       cy="109.9002"
+       rx="4.4250212"
+       ry="4.3312731" /><ellipse
+       style="display:none;opacity:0.782222;fill:#141500;fill-opacity:0.992095;stroke:none;stroke-width:2.56976;stroke-dasharray:none;stroke-opacity:1"
+       id="stone-lale"
+       cx="124.05132"
+       cy="71.606667"
+       rx="4.4250212"
+       ry="4.3312731" /><path
+       style="fill:#ff0000;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-dasharray:none"
+       d="m 13.609423,113.48271 12.515614,12.51561"
+       id="path_kahu_gola" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-dasharray:none"
+       d="m 41.561345,101.60641 11.682005,10.35951 v 0 0"
+       id="path-kahu-jojo" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-dasharray:none"
+       d="m 53.022933,93.230636 16.531138,4.628718"
+       id="path-kahu-iffi" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-dasharray:none"
+       d="M 50.377952,83.311954 65.586596,78.683236"
+       id="path-kahu-lale" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-dasharray:none"
+       d="m -3.403347,134.44827 -1.7633212,16.09031"
+       id="path-kahu-coco" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-dasharray:none"
+       d="M 5.4132585,160.45726 17.976924,150.53858"
+       id="path-coco-gola" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+       d="m 22.991214,172.71762 14.98823,-5.06955"
+       id="path1" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-dasharray:none"
+       d="m 31.863077,191.31538 c -0.220414,0.44083 17.192384,-1.10207 17.192384,-1.10207"
+       id="path-coco-bari" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-dasharray:none"
+       d="m 25.471038,139.95865 14.547402,6.83287"
+       id="path-gola-faaa" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-dasharray:none"
+       d="m 34.508061,127.17457 15.869891,-1.76332"
+       id="path-gola-jojo" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-dasharray:none"
+       d="m 45.528817,146.5711 9.477854,-14.98823"
+       id="path-faaa-jojo" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-dasharray:none"
+       d="m 71.096976,124.08876 16.531137,-6.83287"
+       id="path-jojo-iffi" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+       d="m 59.359714,156.4069 16.971967,-2.42457"
+       id="path-faaa-elai" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-dasharray:none"
+       d="m 69.11324,132.0237 14.10657,9.47785"
+       id="path-jojo-elai" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-dasharray:none"
+       d="m 55.006671,165.30639 6.171623,15.20865"
+       id="path-faaa-bari" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-dasharray:none"
+       d="m 109.66963,176.10674 8.15536,-14.32699"
+       id="path-bari-elai" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-dasharray:none"
+       d="m 111.43295,121.00295 10.35951,13.2249"
+       id="path-iffi-elai" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-dasharray:none"
+       d="m 121.79246,78.462822 -1.10207,15.649474"
+       id="path-lale-iffi" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-dasharray:none"
+       d="m 134.79696,202.11572 15.64947,3.30623"
+       id="path-bari-aloa" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-dasharray:none"
+       d="m 147.36062,176.9884 10.57993,-12.56367"
+       id="path-bari-duda" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-dasharray:none"
+       d="m 141.62983,155.38771 15.86989,3.08581"
+       id="path-elai-duda" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-dasharray:none"
+       d="M 143.17273,143.92612 157.2793,131.58287"
+       id="path-elai-huna" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-dasharray:none"
+       d="m 147.14021,105.7943 13.44532,11.46159"
+       id="path-iffi-huna" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-dasharray:none"
+       d="m 163.45093,76.038254 7.71453,13.886154"
+       id="path-lale-huna" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-dasharray:none"
+       d="m 164.11217,131.36246 0.44083,15.64947"
+       id="path-huna-duda" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-dasharray:none"
+       d="m 181.9658,128.05623 13.88615,10.1391"
+       id="path-huna-aloa" /><path
+       style="fill:none;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-dasharray:none"
+       d="m 168.96131,166.18805 8.59619,14.5474"
+       id="path-duda-aloa" /><ellipse
+       style="display:none;opacity:0.782222;fill:#141500;fill-opacity:0.992095;stroke:none;stroke-width:2.56976;stroke-dasharray:none;stroke-opacity:1"
+       id="stone-kahu"
+       cx="43.47628"
+       cy="93.05854"
+       rx="4.4250212"
+       ry="4.3312731" /><image
+       width="33.066334"
+       height="50.355415"
+       preserveAspectRatio="none"
+       xlink:href="card-back.png"
+       id="open-draw-1"
+       x="-62.390522"
+       y="98.11866"
+       inkscape:svg-dpi="1" /><image
+       width="33.066334"
+       height="50.355415"
+       preserveAspectRatio="none"
+       xlink:href="card-back.png"
+       id="open-draw-2"
+       x="-62.577824"
+       y="150.89841"
+       inkscape:svg-dpi="1" /><image
+       width="33.066334"
+       height="50.355415"
+       preserveAspectRatio="none"
+       xlink:href="card-back.png"
+       id="open-draw-3"
+       x="-62.625458"
+       y="203.43051"
+       inkscape:svg-dpi="1" /><image
+       width="32.84222"
+       height="50.805462"
+       preserveAspectRatio="none"
+       xlink:href="card-back.png"
+       id="hidden-draw"
+       x="-62.355598"
+       y="45.497055"
+       inkscape:svg-dpi="1" /><image
+       width="32.84222"
+       height="50.805462"
+       preserveAspectRatio="none"
+       xlink:href="card-back.png"
+       id="opponen-card-1"
+       x="0.83679956"
+       y="-11.396535"
+       inkscape:svg-dpi="1" /><image
+       width="32.84222"
+       height="50.805462"
+       preserveAspectRatio="none"
+       xlink:href="card-back.png"
+       id="opponen-card-2"
+       x="39.005116"
+       y="-11.935717"
+       inkscape:svg-dpi="1" /><image
+       width="32.84222"
+       height="50.805462"
+       preserveAspectRatio="none"
+       xlink:href="card-back.png"
+       id="opponen-card-3"
+       x="77.261765"
+       y="-12.023612"
+       inkscape:svg-dpi="1" /><image
+       width="32.84222"
+       height="50.805462"
+       preserveAspectRatio="none"
+       xlink:href="card-back.png"
+       id="opponen-card-4"
+       x="116.40008"
+       y="-12.631106"
+       inkscape:svg-dpi="1" /><image
+       width="32.84222"
+       height="50.805462"
+       preserveAspectRatio="none"
+       xlink:href="card-back.png"
+       id="opponen-card-5"
+       x="153.55055"
+       y="-11.396535"
+       inkscape:transform-center-x="4.0766763"
+       inkscape:transform-center-y="1.0191691"
+       inkscape:svg-dpi="1" /><image
+       width="32.84222"
+       height="50.805462"
+       preserveAspectRatio="none"
+       xlink:href="card-back.png"
+       id="mycard-1"
+       x="-0.17010882"
+       y="260.28091"
+       inkscape:svg-dpi="1" /><image
+       width="32.84222"
+       height="50.805462"
+       preserveAspectRatio="none"
+       xlink:href="card-back.png"
+       id="mycard-2"
+       x="37.998203"
+       y="259.74173"
+       inkscape:svg-dpi="1" /><image
+       width="32.84222"
+       height="50.805462"
+       preserveAspectRatio="none"
+       xlink:href="card-back.png"
+       id="mycard-3"
+       x="76.254852"
+       y="259.65384"
+       inkscape:svg-dpi="1" /><image
+       width="32.84222"
+       height="50.805462"
+       preserveAspectRatio="none"
+       xlink:href="card-back.png"
+       id="mycard-4"
+       x="115.39317"
+       y="259.04636"
+       inkscape:svg-dpi="1" /><image
+       width="32.84222"
+       height="50.805462"
+       preserveAspectRatio="none"
+       xlink:href="card-back.png"
+       id="mycard-5"
+       x="152.54364"
+       y="260.28091"
+       inkscape:transform-center-x="4.0766763"
+       inkscape:transform-center-y="1.0191691"
+       inkscape:svg-dpi="1" /><image
+       width="32.84222"
+       height="50.805462"
+       preserveAspectRatio="none"
+       xlink:href="card-back.png"
+       id="used-pile"
+       x="243.45972"
+       y="91.526382"
+       inkscape:svg-dpi="1" /></g><g id="overlay" transform="translate(24.563202,-44.959717)"></g>
+</svg>
+<div id="right-panel">
+  <div id="info-panel">
+    <div id="scores-row">
+      <div class="player-score">
+        <div class="pn you">YOU</div>
+        <div class="pts you" id="p0-score">0</div>
+        <div class="isl" id="p0-islands">0 islands</div>
+      </div>
+      <div class="player-score" style="text-align:right">
+        <div class="pn bot">BOT</div>
+        <div class="pts bot" id="p1-score">0</div>
+        <div class="isl" id="p1-islands">0 islands</div>
+      </div>
+    </div>
+    <div id="tb-status">Loading…</div>
+    <div id="tb-actions">
+      <button id="btn-discard" class="act-btn danger" onclick="handleDiscardHidden()" style="display:none">DISCARD HIDDEN</button>
+      <button id="btn-skip-draw" class="act-btn" onclick="handleSkipDraw()" style="display:none">SKIP DRAW</button>
+    </div>
+    <button class="tb-btn" onclick="initGame()">NEW GAME</button>
+  </div>
+  <div id="log-label">GAME LOG</div>
+  <div id="game-log"></div>
+</div>
+</div><!-- #game-area -->
+
+<script>
+const NS='http://www.w3.org/2000/svg';
+const ISLAND_NAMES=['lale','iffi','huna','kahu','jojo','gola','faaa','coco','bari','elai','duda','aloa'];
+const ISLANDS=['LALE','IFFI','HUNA','KAHU','JOJO','GOLA','FAAA','COCO','BARI','ELAI','DUDA','ALOA'];
+const CARD_IMG=['lale.png','iffi.png','huna.png','kahu.png','jojo.png','gola.png',
+                'faaa.png','coco.png','bari.png','elai.png','duda.png','aloha.png'];
+
+// 27 connections — includes FAAA(6)—COCO(7) = path1
+const CONNS=[
+  [0,1],[0,2],[0,3],[1,2],[1,3],[1,4],[1,9],[2,9],[2,10],[2,11],
+  [3,4],[3,5],[3,7],[4,5],[4,6],[4,9],[5,6],[5,7],[6,8],[6,9],
+  [7,8],[8,9],[8,10],[8,11],[9,10],[10,11],[6,7]
+];
+const CONN_ID=[
+  'path-lale-iffi','path-lale-huna','path-kahu-lale','path-iffi-huna','path-kahu-iffi',
+  'path-jojo-iffi','path-iffi-elai','path-elai-huna','path-huna-duda','path-huna-aloa',
+  'path-kahu-jojo','path_kahu_gola','path-kahu-coco','path-gola-jojo','path-faaa-jojo',
+  'path-jojo-elai','path-gola-faaa','path-coco-gola','path-faaa-bari','path-faaa-elai',
+  'path-coco-bari','path-bari-elai','path-bari-duda','path-bari-aloa','path-elai-duda',
+  'path-duda-aloa','path1'
+];
+
+const DEG=new Array(12).fill(0);
+CONNS.forEach(([a,b])=>{DEG[a]++;DEG[b]++;});
+const MAJ=DEG.map(d=>Math.floor(d/2)+1);
+
+const BRIDGE_COLOR=['#e8d4b0','#203848'];
+const STONE_FILL=['#f0ecd8','#151515'];
+const STONE_STROKE=['#a09070','#4a8090'];
+const TRACKER_BRIDGE_COLOR=['#ffe566','#222222'];
+const TRACKER_STONE_FILL=['#fff0a0','#1a1a1a'];
+
+// ---- Audio ----
+let audioCtx=null;
+function ensureAudio(){
+  if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+  if(audioCtx.state==='suspended')audioCtx.resume();
+}
+document.addEventListener('pointerdown',ensureAudio,{once:true});
+function sndClick(){
+  ensureAudio();const ctx=audioCtx,t=ctx.currentTime;
+  for(let i=0;i<2;i++){
+    const buf=ctx.createBuffer(1,ctx.sampleRate*0.01,ctx.sampleRate);
+    const d=buf.getChannelData(0);
+    for(let j=0;j<d.length;j++)d[j]=(Math.random()*2-1)*Math.pow(1-j/d.length,2);
+    const s=ctx.createBufferSource();s.buffer=buf;
+    const f=ctx.createBiquadFilter();f.type='highpass';f.frequency.value=3000;
+    const g=ctx.createGain();g.gain.value=0.25;
+    s.connect(f);f.connect(g);g.connect(ctx.destination);
+    s.start(t+i*0.007);s.stop(t+i*0.007+0.012);
+  }
+}
+function sndCapture(){
+  ensureAudio();const ctx=audioCtx,t=ctx.currentTime;
+  [400,550,700].forEach((f,i)=>{
+    const o=ctx.createOscillator();o.type='sine';o.frequency.value=f;
+    const g=ctx.createGain();
+    g.gain.setValueAtTime(0.12,t+i*0.09);
+    g.gain.exponentialRampToValueAtTime(0.001,t+i*0.09+0.18);
+    o.connect(g);g.connect(ctx.destination);o.start(t+i*0.09);o.stop(t+i*0.09+0.2);
+  });
+}
+function sndScore(){
+  ensureAudio();const ctx=audioCtx,t=ctx.currentTime;
+  [523,659,784,1047].forEach((f,i)=>{
+    const o=ctx.createOscillator();o.type='sine';o.frequency.value=f;
+    const g=ctx.createGain();
+    g.gain.setValueAtTime(0.09,t+i*0.13);
+    g.gain.exponentialRampToValueAtTime(0.001,t+i*0.13+0.22);
+    o.connect(g);g.connect(ctx.destination);o.start(t+i*0.13);o.stop(t+i*0.13+0.25);
+  });
+}
+
+// ---- Animation ----
+let animLock=false;
+
+function getRect(el){
+  if(!el)return null;
+  const cs=getComputedStyle(el);
+  if(cs.display==='none'||el.style.display==='none'){
+    el.style.visibility='hidden';
+    el.style.display='';
+    const r=el.getBoundingClientRect();
+    el.style.display='none';
+    el.style.visibility='';
+    return r;
+  }
+  return el.getBoundingClientRect();
+}
+
+function animCard(srcEl,dstEl,imgSrc,cb){
+  const sr=getRect(srcEl),dr=getRect(dstEl);
+  if(!sr||!dr||sr.width<2||dr.width<2){cb&&cb();return;}
+  if(srcEl)srcEl.style.opacity='0';
+  const img=document.createElement('img');
+  img.src=imgSrc;
+  img.style.cssText=
+    'position:fixed;pointer-events:none;z-index:1000;border-radius:4px;'+
+    'box-shadow:0 6px 20px rgba(0,0,0,0.7);'+
+    `left:${sr.left}px;top:${sr.top}px;width:${sr.width}px;height:${sr.height}px;`+
+    'transition:left 1.3s cubic-bezier(0.4,0,0.2,1),top 1.3s cubic-bezier(0.4,0,0.2,1),'+
+    'width 1.3s ease,height 1.3s ease;';
+  document.body.appendChild(img);
+  void img.offsetWidth;
+  img.style.left=dr.left+'px';img.style.top=dr.top+'px';
+  img.style.width=dr.width+'px';img.style.height=dr.height+'px';
+  img.addEventListener('transitionend',()=>{
+    img.remove();
+    if(srcEl)srcEl.style.opacity='';
+    cb&&cb();
+  },{once:true});
+}
+
+// ---- Game Log ----
+function logEvent(text,cls='lx'){
+  const log=document.getElementById('game-log');
+  if(!log)return;
+  const d=document.createElement('div');
+  d.className='log-entry '+cls;
+  d.textContent=text;
+  log.prepend(d);
+  if(log.children.length>120)log.removeChild(log.lastChild);
+}
+function logYou(t){logEvent(t,'ly');}
+function logBot(t){logEvent(t,'lb');}
+function logP(p,t){p===0?logYou(t):logBot(t);}
+function logCap(t){logEvent(t,'lc');}
+function logScore(t){logEvent(t,'ls');}
+function logPhase(t){logEvent(t,'lp');}
+
+// ---- State ----
+let deck,market,hands,bridges,controlled,scores,
+    curP,subphase,selCards,aiThinking,discard,
+    gamePhase,hasPlayed,lastPassedDraw,phaseTransitioning;
+const vsAI=true;
+const pnames=['You','Bot'];
+
+function initGame(){
+  const full=[];for(let i=0;i<12;i++){full.push(i);full.push(i);}
+  shuffle(full);
+  hands=[[],[]];
+  hands[0]=full.splice(0,3);hands[1]=full.splice(0,3);
+  market=full.splice(0,3);
+  deck=[...full];
+  discard=[];
+  bridges=new Array(CONNS.length).fill(null);
+  controlled=new Array(12).fill(null);
+  scores=[0,0];curP=0;subphase='play';
+  selCards=[];aiThinking=false;animLock=false;
+  gamePhase=1;hasPlayed=false;lastPassedDraw=false;phaseTransitioning=false;
+  const log=document.getElementById('game-log');if(log)log.innerHTML='';
+  logPhase('── Game started · Phase 1/3 ──');
+  render();
+  if(vsAI&&curP===1)scheduleAI();
+}
+
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}}
+
+// ---- Helpers ----
+function hasValidMove(){
+  for(let h=0;h<hands[curP].length;h++){
+    const isl=hands[curP][h];
+    for(let ci=0;ci<CONNS.length;ci++){
+      const[a,b]=CONNS[ci];
+      if((a===isl||b===isl)&&bridges[ci]===null)return true;
+    }
+  }
+  for(let h1=0;h1<hands[curP].length;h1++){
+    for(let h2=h1+1;h2<hands[curP].length;h2++){
+      const i1=hands[curP][h1],i2=hands[curP][h2];
+      for(let ci=0;ci<CONNS.length;ci++){
+        const[a,b]=CONNS[ci];
+        if(bridges[ci]===1-curP&&(i1===a||i1===b)&&(i2===a||i2===b))return true;
+      }
+    }
+  }
+  return false;
+}
+
+function checkInstantWin(){
+  if(gamePhase<2)return -1;
+  const cnt=[0,0];
+  bridges.forEach(b=>{if(b===0)cnt[0]++;else if(b===1)cnt[1]++;});
+  if(cnt[0]===0&&cnt[1]>0)return 1;
+  if(cnt[1]===0&&cnt[0]>0)return 0;
+  return -1;
+}
+
+// ---- State updaters ----
+function _applyPlace(handIdx,ci){
+  const isl=hands[curP][handIdx];
+  if(!CONNS[ci].includes(isl)||bridges[ci]!==null)return false;
+  discard.push(hands[curP].splice(handIdx,1)[0]);
+  bridges[ci]=curP;
+  const[a,b]=CONNS[ci];
+  logP(curP,`${pnames[curP]} played ${ISLANDS[isl]}, built ${ISLANDS[a]}↔${ISLANDS[b]}`);
+  resolveAll();
+  return true;
+}
+
+function _applyRemove(h1,h2,ci){
+  const[a,b]=CONNS[ci];
+  const i1=hands[curP][h1],i2=hands[curP][h2];
+  // Either card can be either endpoint
+  if(!((i1===a||i1===b)&&(i2===a||i2===b)))return false;
+  if(bridges[ci]!==1-curP)return false;
+  const hi=Math.max(h1,h2),lo=Math.min(h1,h2);
+  discard.push(hands[curP].splice(hi,1)[0]);
+  discard.push(hands[curP].splice(lo,1)[0]);
+  bridges[ci]=null;
+  logP(curP,`${pnames[curP]} removed ${ISLANDS[a]}↔${ISLANDS[b]} (used ${ISLANDS[i1]}+${ISLANDS[i2]})`);
+  resolveAll();
+  return true;
+}
+
+function _applyDraw(src){
+  let drew=false;
+  if(src==='deck'){
+    if(deck.length&&hands[curP].length<5){
+      const card=deck.shift();hands[curP].push(card);drew=true;
+      logP(curP,`${pnames[curP]} drew ${curP===0?ISLANDS[card]:'a card'} (deck)`);
+    }
+  }else{
+    const mi=parseInt(src);
+    if(market[mi]!==undefined&&hands[curP].length<5){
+      const card=market[mi];
+      hands[curP].push(card);
+      market.splice(mi,1);
+      if(deck.length)market.push(deck.shift());
+      drew=true;
+      logP(curP,`${pnames[curP]} drew ${ISLANDS[card]} (open)`);
+    }
+  }
+  return drew;
+}
+
+function resolveAll(){
+  let changed=true;
+  while(changed){
+    changed=false;
+    for(let isl=0;isl<12;isl++){
+      const cnt=[0,0];
+      CONNS.forEach(([a,b],ci)=>{
+        if(a!==isl&&b!==isl)return;
+        if(bridges[ci]===0)cnt[0]++;else if(bridges[ci]===1)cnt[1]++;
+      });
+      const prev=controlled[isl];
+      const next=cnt[0]>=MAJ[isl]?0:cnt[1]>=MAJ[isl]?1:null;
+      if(next!==prev){
+        controlled[isl]=next;changed=true;
+        if(next!==null){
+          const removed=[];
+          CONNS.forEach(([a,b],ci)=>{
+            if((a===isl||b===isl)&&bridges[ci]===1-next){
+              removed.push(`${ISLANDS[a]}↔${ISLANDS[b]}`);
+              bridges[ci]=null;
+            }
+          });
+          logCap(`▶ ${pnames[next]} captured ${ISLANDS[isl]}!`+
+                 (removed.length?` (removed: ${removed.join(', ')})` :''));
+          sndCapture();
+        }else if(prev!==null){
+          // island lost control
+          logEvent(`  ${ISLANDS[isl]} control lost`,'lx');
+        }
+      }
+    }
+  }
+}
+
+// ---- Scoring & Phase Management ----
+function doScoring(phase){
+  const ic=[0,0];
+  controlled.forEach(c=>{if(c===0)ic[0]++;else if(c===1)ic[1]++;});
+  const winner=ic[0]>ic[1]?0:ic[1]>ic[0]?1:-1;
+  const pts=phase===1?1:phase===2?2:Math.abs(ic[0]-ic[1]);
+  if(winner>=0)scores[winner]+=pts;
+  sndScore();
+  if(winner>=0)logScore(`★ Phase ${phase}: ${pnames[winner]} scores ${pts}pt (${ic[winner]} vs ${ic[1-winner]} islands)`);
+  else logScore(`★ Phase ${phase}: tied ${ic[0]}-${ic[1]} — no points`);
+  const labels=['PHASE 1 SCORING — 1 POINT','PHASE 2 SCORING — 2 POINTS','FINAL SCORING'];
+  let body;
+  if(winner>=0){
+    const col=winner===0?'#e8c87a':'#22d3ee';
+    body=`<span style="color:${col}">${pnames[winner]}</span> controls `+
+         `${ic[winner]} islands vs ${ic[1-winner]} `+
+         `→ <strong>+${pts} point${pts!==1?'s':''}</strong>`;
+  }else{
+    body=`Tied ${ic[0]}–${ic[1]} islands — no points this phase.`;
+  }
+  if(phase<3)body+=`<br><small style="color:#888;font-size:0.72rem">Deck reshuffled for Phase ${phase+1}…</small>`;
+  const banner=document.getElementById('scoring-banner');
+  banner.querySelector('h3').textContent=labels[phase-1];
+  banner.querySelector('p').innerHTML=body;
+  banner.style.display='block';
+  setTimeout(()=>banner.style.display='none',5500);
+}
+
+function startPhaseTransition(afterCb){
+  // Shuffle discard into new deck, replenish market
+  shuffle(discard);
+  deck=[...discard];
+  discard=[];
+  market=[];
+  while(market.length<3&&deck.length>0)market.push(deck.shift());
+  phaseTransitioning=false;
+  logPhase(`── Phase ${gamePhase}/3 begins ──`);
+  afterCb&&afterCb();
+}
+
+// ---- Turn Flow ----
+function doEndTurn(playerPassedDraw){
+  selCards=[];
+  const prevPassedDraw=playerPassedDraw||false;
+  hasPlayed=false;
+
+  // Instant win check (phases 2+)
+  if(gamePhase>=2){
+    const w=checkInstantWin();
+    if(w>=0){
+      subphase='over';
+      const loser=1-w;
+      const ic=[0,0];controlled.forEach(c=>{if(c===0)ic[0]++;else if(c===1)ic[1]++;});
+      const banner=document.getElementById('scoring-banner');
+      banner.querySelector('h3').textContent='INSTANT WIN';
+      banner.querySelector('p').innerHTML=
+        `<span style="color:${w===0?'#e8c87a':'#22d3ee'}">${pnames[w]}</span> wins! `+
+        `${pnames[loser]} had no bridges on the board.`;
+      banner.style.display='block';
+      animLock=false;render();return;
+    }
+  }
+
+  // Phase end: deck AND market both empty
+  if(deck.length===0&&market.length===0){
+    phaseTransitioning=true;
+    doScoring(gamePhase);
+    if(gamePhase>=3){
+      subphase='over';animLock=false;render();return;
+    }
+    const nextPlayer=1-curP;
+    setTimeout(()=>{
+      gamePhase++;
+      startPhaseTransition(()=>{
+        curP=nextPlayer;subphase='play';animLock=false;lastPassedDraw=false;
+        render();if(vsAI&&curP===1)scheduleAI();
+      });
+    },5600);
+    return;
+  }
+
+  lastPassedDraw=prevPassedDraw;
+  curP=1-curP;subphase='play';hasPlayed=false;animLock=false;
+  render();
+  if(vsAI&&curP===1)scheduleAI();
+}
+
+// ---- Human Interaction ----
+function handleCardClick(handIdx){
+  if(animLock||subphase!=='play'||aiThinking||(vsAI&&curP===1))return;
+  const idx=selCards.indexOf(handIdx);
+  if(idx>=0){selCards.splice(idx,1);render();return;}
+  if(selCards.length===0){selCards=[handIdx];render();return;}
+  if(selCards.length===1){
+    // If same slot clicked again (shouldn't happen, caught above), ignore
+    // Try to find a removable bridge for this pair
+    const i1=hands[curP][selCards[0]],i2=hands[curP][handIdx];
+    const hasRemovable=CONNS.some(([a,b],ci)=>
+      bridges[ci]===1-curP&&(i1===a||i1===b)&&(i2===a||i2===b)
+    );
+    if(hasRemovable||selCards[0]!==handIdx){
+      selCards=[selCards[0],handIdx];
+    }else{
+      selCards=[handIdx];
+    }
+    render();return;
+  }
+  selCards=[handIdx];render();
+}
+
+function handleBridgeClick(ci){
+  if(animLock||(vsAI&&curP===1)||subphase!=='play')return;
+  if(selCards.length===1){
+    const handIdx=selCards[0];
+    const isl=hands[curP][handIdx];
+    if(!CONNS[ci].includes(isl)||bridges[ci]!==null)return;
+    const srcEl=document.getElementById('mycard-'+(handIdx+1));
+    const dstEl=document.getElementById('used-pile');
+    selCards=[];animLock=true;sndClick();render();
+    animCard(srcEl,dstEl,CARD_IMG[isl],()=>{
+      _applyPlace(handIdx,ci);
+      animLock=false;render();
+    });
+  }else if(selCards.length===2){
+    const[h1,h2]=[selCards[0],selCards[1]];
+    const[a,b]=CONNS[ci];
+    const[i1,i2]=[hands[curP][h1],hands[curP][h2]];
+    if(!((i1===a||i1===b)&&(i2===a||i2===b)))return;
+    if(bridges[ci]!==1-curP)return;
+    const src1=document.getElementById('mycard-'+(h1+1));
+    const src2=document.getElementById('mycard-'+(h2+1));
+    const dst=document.getElementById('used-pile');
+    selCards=[];animLock=true;sndClick();render();
+    animCard(src1,dst,CARD_IMG[i1],()=>{
+      animCard(src2,dst,CARD_IMG[i2],()=>{
+        _applyRemove(h1,h2,ci);
+        animLock=false;render();
+      });
+    });
+  }
+}
+
+function handleDrawClick(src){
+  if(animLock||subphase!=='play'||aiThinking||(vsAI&&curP===1))return;
+  if(phaseTransitioning)return;
+  const slotIdx=hands[0].length;
+  const dstEl=document.getElementById('mycard-'+(slotIdx+1));
+  let srcEl,imgSrc;
+  if(src==='deck'){
+    srcEl=document.getElementById('hidden-draw');imgSrc='card-back.png';
+  }else{
+    const mi=parseInt(src);
+    srcEl=document.getElementById('open-draw-'+(mi+1));
+    imgSrc=market[mi]!==undefined?CARD_IMG[market[mi]]:'card-back.png';
+  }
+  animLock=true;
+  animCard(srcEl,dstEl,imgSrc,()=>{
+    _applyDraw(src);
+    doEndTurn(false);
+  });
+}
+
+function handleDiscardHidden(){
+  // Player has no valid moves — discard selected cards under the pile
+  if(animLock||subphase!=='play'||aiThinking||(vsAI&&curP===1))return;
+  if(hasValidMove())return;
+  if(selCards.length===0)return;
+  // Animate all selected cards to discard pile, sorted descending to avoid index shift
+  const toDiscard=[...selCards].sort((a,b)=>b-a);
+  const dst=document.getElementById('used-pile');
+  animLock=true;
+  function discardNext(i){
+    if(i>=toDiscard.length){
+      selCards=[];
+      logYou(`You secretly discarded ${toDiscard.length} card${toDiscard.length>1?'s':''}`);
+      animLock=false;render();return;
+    }
+    const hIdx=toDiscard[i];
+    const srcEl=document.getElementById('mycard-'+(hIdx+1));
+    const img=CARD_IMG[hands[curP][hIdx]];
+    animCard(srcEl,dst,img,()=>{
+      // Place card under discard pile (unshift = bottom)
+      discard.unshift(hands[curP].splice(hIdx,1)[0]);
+      discardNext(i+1);
+    });
+  }
+  selCards=[...selCards]; // snapshot before modification
+  discardNext(0);
+}
+
+function handleSkipDraw(){
+  if(animLock||subphase!=='play'||aiThinking||(vsAI&&curP===1))return;
+  if(lastPassedDraw)return; // can't skip if opponent also skipped
+  logYou('You skipped drawing a card');
+  doEndTurn(true); // true = this player passed draw
+}
+
+function findConn(ia,ib){
+  return CONNS.findIndex(([a,b])=>(a===ia&&b===ib)||(a===ib&&b===ia));
+}
+
+// ---- AI ----
+function scheduleAI(){aiThinking=true;render();setTimeout(doAITurn,900);}
+
+function doAITurn(){
+  aiThinking=false;
+  animLock=true;
+  const move=findBestMove();
+
+  const doAIDraw=()=>{
+    if(phaseTransitioning){animLock=false;return;}
+    if(hands[1].length<5&&(deck.length>0||market.length>0)){
+      const src=bestDraw();
+      const slotIdx=hands[1].length;
+      const dstEl=document.getElementById('opponen-card-'+(slotIdx+1));
+      const srcEl=src==='deck'
+        ?document.getElementById('hidden-draw')
+        :document.getElementById('open-draw-'+(src+1));
+      animCard(srcEl,dstEl,'card-back.png',()=>{
+        _applyDraw(src);render();doEndTurn(false);
+      });
+    }else{
+      // Nothing to draw — end turn (pass draw forced or nothing available)
+      const aiPassedDraw=!(deck.length===0&&market.length===0);
+      if(aiPassedDraw)logBot('Bot skipped drawing a card');
+      doEndTurn(aiPassedDraw);
+    }
+  };
+
+  if(move){
+    const srcEl=document.getElementById('opponen-card-'+(move.h+1));
+    const dst=document.getElementById('used-pile');
+    if(move.type==='place'){
+      animCard(srcEl,dst,'card-back.png',()=>{
+        sndClick();_applyPlace(move.h,move.ci);
+        hasPlayed=true;render();setTimeout(doAIDraw,350);
+      });
+    }else{
+      const src2El=document.getElementById('opponen-card-'+(move.h2+1));
+      animCard(srcEl,dst,'card-back.png',()=>{
+        animCard(src2El,dst,'card-back.png',()=>{
+          sndClick();_applyRemove(move.h1,move.h2,move.ci);
+          hasPlayed=true;render();setTimeout(doAIDraw,350);
+        });
+      });
+    }
+  }else{
+    // AI has no valid moves — silently pass play
+    hasPlayed=true;
+    setTimeout(doAIDraw,600);
+  }
+}
+
+function findBestMove(){
+  let best=-Infinity,bm=null;
+  hands[1].forEach((isl,hi)=>{
+    CONNS.forEach(([a,b],ci)=>{
+      if((a!==isl&&b!==isl)||bridges[ci]!==null)return;
+      const sc=evalPlace(ci,1);
+      if(sc>best){best=sc;bm={type:'place',h:hi,ci};}
+    });
+  });
+  for(let i=0;i<hands[1].length;i++){
+    for(let j=i+1;j<hands[1].length;j++){
+      const i1=hands[1][i],i2=hands[1][j];
+      CONNS.forEach(([a,b],ci)=>{
+        if(bridges[ci]!==0)return;
+        if(!((i1===a||i1===b)&&(i2===a||i2===b)))return;
+        const sc=evalRemove(ci,1)+3;
+        if(sc>best){best=sc;bm={type:'remove',h1:i,h2:j,ci};}
+      });
+    }
+  }
+  return bm;
+}
+
+function evalPlace(ci,player){
+  const opp=1-player;let s=0;
+  CONNS[ci].forEach(isl=>{
+    const cnt=[0,0];
+    CONNS.forEach(([a,b],c2)=>{
+      if(a!==isl&&b!==isl)return;
+      const br=c2===ci?player:bridges[c2];
+      if(br===0)cnt[0]++;else if(br===1)cnt[1]++;
+    });
+    const maj=MAJ[isl];
+    if(cnt[player]>=maj)s+=12;else s+=(cnt[player]/maj)*4;
+    if(cnt[opp]===maj-1)s+=5;
+    if(controlled[isl]===opp)s+=4;
+    s+=DEG[isl]*0.3;
+  });
+  return s;
+}
+
+function evalRemove(ci,player){
+  let s=0;const opp=1-player;
+  CONNS[ci].forEach(isl=>{
+    const cnt=[0,0];
+    CONNS.forEach(([a,b],c2)=>{
+      if(a!==isl&&b!==isl)return;
+      const br=c2===ci?null:bridges[c2];
+      if(br===0)cnt[0]++;else if(br===1)cnt[1]++;
+    });
+    if(controlled[isl]===opp&&cnt[opp]<MAJ[isl])s+=8;
+    if(cnt[opp]<MAJ[isl])s+=4;
+    s+=DEG[isl]*0.3;
+  });
+  return s;
+}
+
+function bestDraw(){
+  if(!market.length)return'deck';
+  let best=-Infinity,bidx=0;
+  market.forEach((isl,mi)=>{
+    let v=0;
+    CONNS.forEach(([a,b],ci)=>{
+      if(a!==isl&&b!==isl)return;
+      if(bridges[ci]===null)v+=1;
+      if(bridges[ci]===0)v+=0.3;
+    });
+    const cnt=[0,0];
+    CONNS.forEach(([a,b],ci)=>{
+      if(a!==isl&&b!==isl)return;
+      if(bridges[ci]===0)cnt[0]++;else if(bridges[ci]===1)cnt[1]++;
+    });
+    if(cnt[1]===MAJ[isl]-1)v+=6;
+    if(v>best){best=v;bidx=mi;}
+  });
+  return best>0.5?bidx:'deck';
+}
+
+// ---- Render ----
+function setHref(el,src){
+  if(!el)return;
+  el.setAttribute('href',src);
+  el.setAttributeNS('http://www.w3.org/1999/xlink','xlink:href',src);
+}
+
+function render(){
+  renderTopBar();renderBridges();renderStones();renderCards();renderTrackers();renderOverlay();
+}
+
+function renderTopBar(){
+  const ic=[0,0];
+  controlled.forEach(c=>{if(c===0)ic[0]++;else if(c===1)ic[1]++;});
+  document.getElementById('p0-score').textContent=scores[0];
+  document.getElementById('p1-score').textContent=scores[1];
+  document.getElementById('p0-islands').textContent=ic[0]+' island'+(ic[0]!==1?'s':'');
+  document.getElementById('p1-islands').textContent=ic[1]+' island'+(ic[1]!==1?'s':'');
+
+  const canDraw=deck.length>0||market.length>0;
+  const noMoves=!hasValidMove()&&hands[curP].length>0;
+  const isHuman=!aiThinking&&!(vsAI&&curP===1)&&!animLock&&subphase==='play'&&!phaseTransitioning;
+
+  const st=document.getElementById('tb-status');
+  const btnDiscard=document.getElementById('btn-discard');
+  const btnSkip=document.getElementById('btn-skip-draw');
+
+  btnDiscard.style.display='none';
+  btnSkip.style.display='none';
+
+  if(subphase==='over'){
+    const w=scores[0]>scores[1]?0:scores[1]>scores[0]?1:-1;
+    st.innerHTML=w>=0
+      ?`<strong style="color:${w===0?'#e8c87a':'#22d3ee'}">${pnames[w]} wins ${scores[w]}–${scores[1-w]}!</strong>`
+      :`Tie ${scores[0]}–${scores[1]}`;
+  }else if(phaseTransitioning){
+    st.textContent=`Phase ${gamePhase} scoring — next phase starting…`;
+  }else if(aiThinking||animLock){
+    st.textContent=aiThinking?`Bot thinking… · Phase ${gamePhase}/3`:`Phase ${gamePhase}/3`;
+    st.style.color='#4a7a50';
+  }else if(!isHuman){
+    st.textContent=`Phase ${gamePhase}/3`;
+  }else{
+    // Human's turn
+    if(noMoves){
+      const sel=selCards.length;
+      st.textContent=sel===0
+        ?'No valid moves — select cards to secretly discard, then DISCARD HIDDEN'
+        :`${sel} card${sel>1?'s':''} selected · click DISCARD HIDDEN`;
+      if(sel>0)btnDiscard.style.display='';
+    }else if(selCards.length===0){
+      st.innerHTML=`Your turn · play cards then draw · <span style="color:#556;font-size:0.7rem">Phase ${gamePhase}/3</span>`;
+      st.style.color='#e8c87a';
+    }else if(selCards.length===1){
+      st.textContent=`${ISLANDS[hands[curP][selCards[0]]]} — click a blue bridge to place it`;
+      st.style.color='#e8c87a';
+    }else{
+      st.textContent='Two cards — click a red opponent bridge to remove it';
+      st.style.color='#ff9090';
+    }
+    // Skip draw always available unless opponent also skipped
+    if(!lastPassedDraw&&canDraw)btnSkip.style.display='';
+  }
+}
+
+function renderBridges(){
+  CONNS.forEach(([a,b],ci)=>{
+    const el=document.getElementById(CONN_ID[ci]);
+    if(!el)return;
+    const br=bridges[ci];
+    if(br===null){el.style.stroke='none';el.style.filter='';}
+    else{
+      el.style.stroke=BRIDGE_COLOR[br];
+      el.style.strokeWidth='2.5';el.style.strokeLinecap='round';
+      el.style.filter=br===0
+        ?'drop-shadow(0 0 1.5px rgba(232,212,176,0.7))'
+        :'drop-shadow(0 0 1.5px rgba(20,56,72,0.9))';
+    }
+  });
+}
+
+function renderStones(){
+  ISLAND_NAMES.forEach((name,i)=>{
+    const el=document.getElementById('stone-'+name);
+    if(!el)return;
+    const c=controlled[i];
+    if(c===null){el.style.display='none';}
+    else{
+      el.style.display='';
+      el.style.fill=STONE_FILL[c];el.style.stroke=STONE_STROKE[c];
+      el.style.strokeWidth='0.5';el.style.opacity='1';
+    }
+  });
+}
+
+function renderCards(){
+  const isHumanTurn=!animLock&&subphase==='play'&&!aiThinking&&!(vsAI&&curP===1)&&!phaseTransitioning;
+  // Draw is always available on human's turn (drawing ends the turn)
+  const drawEnabled=isHumanTurn&&(deck.length>0||market.length>0);
+
+  for(let i=0;i<5;i++){
+    const el=document.getElementById('mycard-'+(i+1));
+    if(!el)continue;
+    if(i<hands[0].length){
+      setHref(el,CARD_IMG[hands[0][i]]);
+      el.style.display='';
+      const sel=selCards.includes(i);
+      if(el.style.opacity!=='0'){
+        el.style.opacity=sel?'1':'0.85';
+        el.style.filter=sel?'drop-shadow(0 0 3px #f0c060)':'none';
+      }
+      const clickable=isHumanTurn&&curP===0;
+      el.style.cursor=clickable?'pointer':'default';
+      el.onclick=clickable?(()=>{const idx=i;return()=>handleCardClick(idx);})():null;
+    }else{
+      el.style.display='none';
+    }
+  }
+
+  for(let i=0;i<5;i++){
+    const el=document.getElementById('opponen-card-'+(i+1));
+    if(!el)continue;
+    if(i<hands[1].length){setHref(el,'card-back.png');el.style.display='';}
+    else el.style.display='none';
+  }
+
+  for(let i=0;i<3;i++){
+    const el=document.getElementById('open-draw-'+(i+1));
+    if(!el)continue;
+    if(i<market.length){
+      setHref(el,CARD_IMG[market[i]]);el.style.display='';
+      el.style.cursor=drawEnabled?'pointer':'default';
+      el.style.filter=drawEnabled?'drop-shadow(0 0 2px #f0c060)':'none';
+      if(el.style.opacity!=='0')el.style.opacity='1';
+      el.onclick=drawEnabled?(()=>{const mi=i;return()=>handleDrawClick(mi);})():null;
+    }else el.style.display='none';
+  }
+
+  const deckEl=document.getElementById('hidden-draw');
+  if(deckEl){
+    if(deck.length){
+      setHref(deckEl,'card-back.png');deckEl.style.display='';
+      deckEl.style.cursor=drawEnabled?'pointer':'default';
+      deckEl.style.filter=drawEnabled?'drop-shadow(0 0 2px #f0c060)':'none';
+      if(deckEl.style.opacity!=='0')deckEl.style.opacity='1';
+      deckEl.onclick=drawEnabled?()=>handleDrawClick('deck'):null;
+    }else deckEl.style.display='none';
+  }
+
+  const usedEl=document.getElementById('used-pile');
+  if(usedEl){
+    if(discard.length){setHref(usedEl,CARD_IMG[discard[discard.length-1]]);usedEl.style.display='';}
+    else usedEl.style.display='none';
+  }
+}
+
+function renderTrackers(){
+  const bridgesUsed=[0,0];
+  bridges.forEach(b=>{if(b===0)bridgesUsed[0]++;else if(b===1)bridgesUsed[1]++;});
+  const islandsHeld=[0,0];
+  controlled.forEach(c=>{if(c===0)islandsHeld[0]++;else if(c===1)islandsHeld[1]++;});
+  const remaining=[25-bridgesUsed[0],25-bridgesUsed[1]];
+  const stonesLeft=[10-islandsHeld[0],10-islandsHeld[1]];
+
+  for(let n=1;n<=25;n++){
+    const s0=n<=remaining[0];
+    const e0=document.getElementById('my-unused-bridge-'+n);
+    if(e0){
+      e0.style.stroke=s0?TRACKER_BRIDGE_COLOR[0]:'none';
+      e0.style.strokeWidth=s0?'2.2':'0';
+      e0.style.filter=s0?`drop-shadow(0 0 1.5px ${TRACKER_BRIDGE_COLOR[0]})`:'';
+    }
+    const s1=n<=remaining[1];
+    const e1=document.getElementById('opponent-unused-bridge-'+n);
+    if(e1){
+      e1.style.stroke=s1?TRACKER_BRIDGE_COLOR[1]:'none';
+      e1.style.strokeWidth=s1?'2.2':'0';
+      e1.style.filter=s1?'drop-shadow(0 0 0.5px rgba(80,80,80,0.5))':'';
+    }
+  }
+
+  for(let n=1;n<=10;n++){
+    const s0=n<=stonesLeft[0];
+    const e0=document.getElementById('my-stone-'+n);
+    if(e0){
+      e0.style.display=s0?'':'none';
+      if(s0){e0.style.fill=TRACKER_STONE_FILL[0];e0.style.opacity='0.9';
+              e0.style.filter='drop-shadow(0 0 1px rgba(255,240,120,0.5))';}
+    }
+    const s1=n<=stonesLeft[1];
+    const e1=document.getElementById('opponent-stone-'+n);
+    if(e1){
+      e1.style.display=s1?'':'none';
+      if(s1){e1.style.fill=TRACKER_STONE_FILL[1];e1.style.opacity='0.9';
+              e1.style.filter='';}
+    }
+  }
+}
+
+function renderOverlay(){
+  const overlay=document.getElementById('overlay');
+  if(!overlay)return;
+  overlay.innerHTML='';
+  const isHuman=!animLock&&subphase==='play'&&!aiThinking&&!(vsAI&&curP===1)&&!phaseTransitioning;
+  if(!isHuman)return;
+
+  const validSet=new Set(),remSet=new Set();
+  if(selCards.length===1){
+    const isl=hands[curP][selCards[0]];
+    CONNS.forEach(([a,b],ci)=>{
+      if((a===isl||b===isl)&&bridges[ci]===null)validSet.add(ci);
+    });
+  }else if(selCards.length===2){
+    const i1=hands[curP][selCards[0]],i2=hands[curP][selCards[1]];
+    CONNS.forEach(([a,b],ci)=>{
+      if(bridges[ci]===1-curP&&(i1===a||i1===b)&&(i2===a||i2===b))remSet.add(ci);
+    });
+  }
+
+  [...validSet,...remSet].forEach(ci=>{
+    const orig=document.getElementById(CONN_ID[ci]);
+    if(!orig)return;
+    const d=orig.getAttribute('d');
+    const isRem=remSet.has(ci);
+    const col=isRem?'rgba(255,80,80,0.9)':'rgba(60,160,255,0.95)';
+
+    const glow=document.createElementNS(NS,'path');
+    glow.setAttribute('d',d);glow.setAttribute('fill','none');
+    glow.style.stroke=isRem?'rgba(255,80,80,0.12)':'rgba(60,160,255,0.18)';
+    glow.style.strokeWidth='8';glow.style.strokeLinecap='round';
+    glow.style.pointerEvents='none';
+    overlay.appendChild(glow);
+
+    const dash=document.createElementNS(NS,'path');
+    dash.setAttribute('d',d);dash.setAttribute('fill','none');
+    dash.style.stroke=col;dash.style.strokeWidth='1.8';
+    dash.style.strokeLinecap='round';dash.style.strokeDasharray='3 2';
+    dash.style.pointerEvents='none';
+    overlay.appendChild(dash);
+
+    const hit=document.createElementNS(NS,'path');
+    hit.setAttribute('d',d);hit.setAttribute('fill','none');
+    hit.style.stroke='transparent';hit.style.strokeWidth='9';hit.style.cursor='pointer';
+    hit.addEventListener('click',()=>handleBridgeClick(ci));
+    overlay.appendChild(hit);
+  });
+}
+
+initGame();
+</script>
+</body>
+</html>
