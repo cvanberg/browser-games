@@ -1263,7 +1263,6 @@ function scheduleAI(){aiThinking=true;render();setTimeout(doAITurn,900);}
 function doAITurn(){
   aiThinking=false;
   animLock=true;
-  const move=findBestMove();
 
   const doAIDraw=()=>{
     if(phaseTransitioning){animLock=false;return;}
@@ -1278,35 +1277,73 @@ function doAITurn(){
         _applyDraw(src);render();doEndTurn(false);
       });
     }else{
-      // Nothing to draw — end turn (pass draw forced or nothing available)
       const aiPassedDraw=!(deck.length===0&&market.length===0);
       if(aiPassedDraw)logBot('Bot skipped drawing a card');
       doEndTurn(aiPassedDraw);
     }
   };
 
-  if(move){
-    const srcEl=document.getElementById('opponen-card-'+(move.h+1));
+  // Returns true if a place move on ci would achieve majority for player 1
+  function wouldCascade(ci){
+    for(const isl of CONNS[ci]){
+      let mine=0;
+      CONNS.forEach(([a,b],c2)=>{
+        if(a!==isl&&b!==isl)return;
+        if((c2===ci?1:bridges[c2])===1)mine++;
+      });
+      if(mine>=MAJ[isl])return true;
+    }
+    return false;
+  }
+
+  // Returns true if removing bridge ci would cost opponent an island they control
+  function isDisruptiveRemoval(ci){
+    const opp=0;
+    for(const isl of CONNS[ci]){
+      if(controlled[isl]!==opp)continue;
+      let oppAfter=0;
+      CONNS.forEach(([a,b],c2)=>{
+        if(a!==isl&&b!==isl)return;
+        if(c2!==ci&&bridges[c2]===opp)oppAfter++;
+      });
+      if(oppAfter<MAJ[isl])return true;
+    }
+    return false;
+  }
+
+  // After the first play, only continue for high-value moves
+  function isWorthAnotherPlay(move){
+    if(!move)return false;
+    if(move.type==='place')return wouldCascade(move.ci);
+    if(move.type==='remove')return isDisruptiveRemoval(move.ci);
+    return false;
+  }
+
+  function playNext(isFirst){
+    const move=findBestMove();
+    if(!move||(isFirst===false&&!isWorthAnotherPlay(move))){
+      setTimeout(doAIDraw,isFirst===false?350:600);
+      return;
+    }
+    const srcEl=document.getElementById('opponen-card-'+((move.h??move.h1)+1));
     const dst=document.getElementById('used-pile');
     if(move.type==='place'){
       animCard(srcEl,dst,'card-back.png',()=>{
         sndClick();_applyPlace(move.h,move.ci);
-        hasPlayed=true;render();setTimeout(doAIDraw,350);
+        hasPlayed=true;render();setTimeout(()=>playNext(false),350);
       });
     }else{
       const src2El=document.getElementById('opponen-card-'+(move.h2+1));
       animCard(srcEl,dst,'card-back.png',()=>{
         animCard(src2El,dst,'card-back.png',()=>{
           sndClick();_applyRemove(move.h1,move.h2,move.ci);
-          hasPlayed=true;render();setTimeout(doAIDraw,350);
+          hasPlayed=true;render();setTimeout(()=>playNext(false),350);
         });
       });
     }
-  }else{
-    // AI has no valid moves — silently pass play
-    hasPlayed=true;
-    setTimeout(doAIDraw,600);
   }
+
+  playNext(true);
 }
 
 function findBestMove(){
